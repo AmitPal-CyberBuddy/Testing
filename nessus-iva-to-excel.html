@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nessus IVA → Excel Vulnerability Register</title>
+<style>
+  :root {
+    --blue: #1F4E79;
+    --red: #C00000;
+    --border: #d8dde3;
+    --bg: #f4f6f8;
+    --card-bg: #ffffff;
+    --text: #1f2933;
+    --muted: #5b6770;
+    --ok: #1a7f37;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 24px 16px 56px;
+  }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { margin: 0 0 6px; font-size: 24px; color: var(--blue); }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .06);
+  }
+  .card h2 {
+    margin: 0 0 12px;
+    font-size: 17px;
+    color: var(--blue);
+    border-bottom: 1px solid #edf0f3;
+    padding-bottom: 8px;
+  }
+  #dropZone {
+    border: 2px dashed #9aa7b3;
+    border-radius: 8px;
+    padding: 28px 18px;
+    text-align: center;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  #dropZone.dragover {
+    border-color: var(--blue);
+    background: #f0f5fb;
+  }
+  #dropZone strong { color: var(--blue); display: block; font-size: 16px; }
+  #dropZone .browse {
+    display: inline-block;
+    margin-top: 10px;
+    background: var(--blue);
+    color: #fff;
+    border: 0;
+    border-radius: 6px;
+    padding: 9px 18px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  #dropZone .browse:hover { background: #16395c; }
+  #dropZone input[type="file"] { display: none; }
+  #fileName {
+    margin: 10px 0 0;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-all;
+  }
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+  .summary-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+  .stat {
+    background: #f8fafc;
+    border: 1px solid #e5eaef;
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .stat .num { font-size: 22px; font-weight: 700; color: var(--blue); display: block; }
+  .stat .lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .02em; }
+  .stat.high .num { color: #b3261e; }
+  .stat.medium .num { color: #9a6500; }
+  .stat.low .num { color: #2e7d32; }
+  .stat.info .num { color: #6b7280; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .field input[type="text"],
+  .field input[type="date"],
+  .field select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #b9c2ca;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+  }
+  .field input:focus, .field select:focus { outline: 2px solid #bcd3ea; border-color: var(--blue); }
+  .severity-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .sev {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #e5eaef;
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fafbfc;
+    cursor: pointer;
+  }
+  .sev input { width: 17px; height: 17px; accent-color: var(--blue); cursor: pointer; }
+  .sev .sev-name { font-weight: 600; font-size: 14px; margin-left: auto; }
+  .sev .sev-count { color: var(--muted); font-size: 13px; min-width: 46px; text-align: right; }
+  #selectedCount { font-weight: 600; margin: 16px 0 12px; color: var(--text); }
+  .export-row { text-align: center; }
+  #exportBtn {
+    background: var(--red);
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    padding: 13px 26px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  #exportBtn:hover:not(:disabled) { background: #9e0000; }
+  #exportBtn:disabled { background: #b9c2ca; cursor: not-allowed; }
+  #messageBox { min-height: 0; }
+  .message { border-radius: 8px; padding: 12px 14px; margin-top: 10px; font-size: 14px; }
+  .message.info { background: #eef4fb; border: 1px solid #ccdcec; color: #1d3a5c; }
+  .message.error { background: #fdecea; border: 1px solid #f3b8b2; color: #842b25; }
+  .message.success { background: #edf7ee; border: 1px solid #b8ddbd; color: #1a7f37; }
+  #privacyNote {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 20px;
+    border-top: 1px solid #e5eaef;
+    padding-top: 14px;
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Nessus IVA → Excel Vulnerability Register</h1>
+    <p>Convert a Tenable Nessus .nessus scan into a formatted Excel vulnerability register.</p>
+  </header>
+
+  <section class="card" id="scanCard">
+    <h2>1. Nessus Scan</h2>
+    <div id="dropZone">
+      <strong>Drag &amp; drop your .nessus file here</strong>
+      <span>or</span>
+      <button type="button" class="browse" id="browseBtn">Browse</button>
+      <input type="file" id="fileInput" accept=".nessus,.xml">
+      <p id="fileName">No file selected.</p>
+    </div>
+  </section>
+
+  <section class="card" id="summaryCard">
+    <h2>2. Scan Summary</h2>
+    <div class="summary-list">
+      <div class="stat"><span class="num" id="hostCount">–</span><span class="lbl">Hosts</span></div>
+      <div class="stat"><span class="num" id="totalFindings">–</span><span class="lbl">Findings</span></div>
+      <div class="stat critical"><span class="num" id="countCritical">0</span><span class="lbl">Critical</span></div>
+      <div class="stat high"><span class="num" id="countHigh">0</span><span class="lbl">High</span></div>
+      <div class="stat medium"><span class="num" id="countMedium">0</span><span class="lbl">Medium</span></div>
+      <div class="stat low"><span class="num" id="countLow">0</span><span class="lbl">Low</span></div>
+      <div class="stat info"><span class="num" id="countInfo">0</span><span class="lbl">Informational</span></div>
+    </div>
+  </section>
+
+  <section class="card" id="settingsCard">
+    <h2>3. Register Settings</h2>
+    <div class="grid2">
+      <div class="field">
+        <label for="project">Project</label>
+        <input type="text" id="project" placeholder="Optional">
+      </div>
+      <div class="field">
+        <label for="activityType">Activity Type</label>
+        <input type="text" id="activityType" placeholder="Optional">
+      </div>
+      <div class="field">
+        <label for="dateRaised">Date Raised</label>
+        <input type="date" id="dateRaised">
+      </div>
+      <div class="field">
+        <label for="expectedDateClose">Expected Date to Close</label>
+        <input type="date" id="expectedDateClose">
+      </div>
+      <div class="field">
+        <label for="status">Status</label>
+        <select id="status">
+          <option value="">Blank</option>
+          <option value="Open">Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Closed">Closed</option>
+          <option value="Accepted Risk">Accepted Risk</option>
+          <option value="False Positive">False Positive</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="owner">Owner (Manager or Action Owner User ID)</label>
+        <input type="text" id="owner" placeholder="Optional">
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="severityCard">
+    <h2>4. Severity Filter</h2>
+    <p style="margin:0 0 12px;color:var(--muted);font-size:13px;">Only selected severities are written to the Excel register.</p>
+    <div class="severity-list">
+      <label class="sev"><input type="checkbox" id="sevCritical" checked><span class="sev-name">Critical</span><span class="sev-count" id="sevCriticalCount">0</span></label>
+      <label class="sev"><input type="checkbox" id="sevHigh" checked><span class="sev-name">High</span><span class="sev-count" id="sevHighCount">0</span></label>
+      <label class="sev"><input type="checkbox" id="sevMedium" checked><span class="sev-name">Medium</span><span class="sev-count" id="sevMediumCount">0</span></label>
+      <label class="sev"><input type="checkbox" id="sevLow" checked><span class="sev-name">Low</span><span class="sev-count" id="sevLowCount">0</span></label>
+      <label class="sev"><input type="checkbox" id="sevInfo"><span class="sev-name">Informational</span><span class="sev-count" id="sevInfoCount">0</span></label>
+    </div>
+    <p id="selectedCount">0 findings selected for export</p>
+    <div class="export-row">
+      <button type="button" id="exportBtn" disabled>Download Excel Register</button>
+    </div>
+  </section>
+
+  <div id="messageBox"></div>
+
+  <p id="privacyNote">100% offline · All processing stays on your computer · No data is uploaded or transmitted.</p>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =========================================================================
+   * Utilities
+   * ========================================================================= */
+
+  var SEVERITIES = {
+    "Critical": { level: 4, order: 0 },
+    "High": { level: 3, order: 1 },
+    "Medium": { level: 2, order: 2 },
+    "Low": { level: 1, order: 3 },
+    "Informational": { level: 0, order: 4 }
+  };
+
+  function sanitizeText(value) {
+    if (value === null || value === undefined) return "";
+    var s = String(value);
+    // Strip invalid XML / Excel control characters (keep tab, LF, CR).
+    s = s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "");
+    s = s.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    return s.trim();
+  }
+
+  function escapeXml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+  }
+
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+  function parseISODate(value) {
+    if (!value) return null;
+    var m = String(value).match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (!m) return null;
+    var year = parseInt(m[1], 10);
+    var month = parseInt(m[2], 10);
+    var day = parseInt(m[3], 10);
+    if (!(year >= 1900 && year <= 9999 && month >= 1 && month <= 12 && day >= 1 && day <= 31)) return null;
+    return { year: year, month: month, day: day };
+  }
+
+  function dateToSerial(value) {
+    var d = parseISODate(value);
+    if (!d) return null;
+    var utc = Date.UTC(d.year, d.month - 1, d.day);
+    var epoch = Date.UTC(1899, 11, 30);
+    return Math.round((utc - epoch) / 86400000);
+  }
+
+  function isoDate(value) {
+    var d = value && typeof value === "object" ? value : parseISODate(value);
+    return d ? d.year + "-" + pad2(d.month) + "-" + pad2(d.day) : "";
+  }
+
+  function dateToSerialObj(d) { return dateToSerial(d.year + "-" + pad2(d.month) + "-" + pad2(d.day)); }
+
+  function yieldUI() { return new Promise(function (r) { setTimeout(r, 0); }); }
+
+  function levelToName(level) {
+    switch (level) {
+      case 4: return "Critical";
+      case 3: return "High";
+      case 2: return "Medium";
+      case 1: return "Low";
+      case 0: return "Informational";
+      default: return "Informational";
+    }
+  }
+
+  function levelFromRiskFactor(riskFactor) {
+    var r = String(riskFactor || "").toLowerCase();
+    if (r.indexOf("critical") !== -1) return 4;
+    if (r.indexOf("high") !== -1) return 3;
+    if (r.indexOf("medium") !== -1) return 2;
+    if (r.indexOf("low") !== -1) return 1;
+    return 0;
+  }
+
+  /* =========================================================================
+   * Validation
+   * ========================================================================= */
+
+  var Validation = {
+    ERR_INVALID_XML: "The selected file could not be read as a valid Nessus v2 report.",
+    ERR_NOT_NESSUS: "The selected file is not a valid Nessus v2 report.",
+    ERR_NO_REPORT: "The selected file does not contain a Nessus <Report> section.",
+    ERR_NO_HOST: "No <ReportHost> entries were found in this Nessus report.",
+    ERR_NO_FINDINGS: "No vulnerability findings were found in this Nessus report.",
+    ERR_NO_SELECTED: "No vulnerability findings selected for export. Enable at least one severity above."
+  };
+
+  /* =========================================================================
+   * Nessus v2 Parser
+   * ========================================================================= */
+
+  var NessusParser = {
+    parseXml: function (text) {
+      var doc = new DOMParser().parseFromString(text, "text/xml");
+      if (doc.getElementsByTagName("parsererror").length > 0) {
+        throw new Error(Validation.ERR_INVALID_XML);
+      }
+      var root = doc.documentElement;
+      var rootName = (root.localName || root.tagName || "").toLowerCase();
+      if (rootName !== "nessusclientdata" && rootName !== "nessusclientdata_v2") {
+        throw new Error(Validation.ERR_NOT_NESSUS);
+      }
+      return doc;
+    },
+
+    parse: async function (text, onProgress) {
+      var doc = NessusParser.parseXml(text);
+      var reports = doc.getElementsByTagName("Report");
+      if (reports.length === 0) {
+        throw new Error(Validation.ERR_NO_REPORT);
+      }
+      var hosts = doc.getElementsByTagName("ReportHost");
+      if (hosts.length === 0) {
+        throw new Error(Validation.ERR_NO_HOST);
+      }
+
+      var findings = [];
+      var earliestHostStart = null;
+      var totalFindings = 0;
+
+      var scan = function (hostIndex) {
+        var host = hosts[hostIndex];
+        var props = NessusParser.parseHostProperties(host);
+        var start = parseISODate(props["HOST_START"] || "");
+        if (start) {
+          if (!earliestHostStart || dateToSerialObj(start) < dateToSerialObj(earliestHostStart)) {
+            earliestHostStart = start;
+          }
+        }
+        var items = host.getElementsByTagName("ReportItem");
+        for (var j = 0; j < items.length; j++) {
+          findings.push(NessusParser.parseReportItem(host, props, items[j]));
+        }
+        totalFindings += items.length;
+      };
+
+      // Walk hosts synchronously but yield periodically so the UI can update.
+      var i = 0;
+      for (i = 0; i < hosts.length; i++) {
+        scan(i);
+        if ((i + 1) % 5 === 0) {
+          onProgress(i + 1, findings.length);
+        }
+        if ((i + 1) % 50 === 0) {
+          await yieldUI();
+        }
+      }
+      onProgress(hosts.length, findings.length);
+
+      if (totalFindings === 0) {
+        throw new Error(Validation.ERR_NO_FINDINGS);
+      }
+
+      return {
+        hostCount: hosts.length,
+        totalFindings: findings.length,
+        findings: findings,
+        earliestHostStart: earliestHostStart ? isoDate(earliestHostStart) : ""
+      };
+    },
+
+    parseHostProperties: function (host) {
+      var props = {};
+      var hostProps = host.getElementsByTagName("HostProperties")[0];
+      if (hostProps) {
+        var tags = hostProps.getElementsByTagName("tag");
+        for (var i = 0; i < tags.length; i++) {
+          var name = tags[i].getAttribute("name") || tags[i].getAttribute("Name") || "";
+          if (!name) continue;
+          if (props[name] === undefined) {
+            props[name] = sanitizeText(tags[i].textContent);
+          }
+        }
+      }
+      return props;
+    },
+
+    attrOrChild: function (item, attrName, childTag) {
+      var a = item.getAttribute(attrName);
+      if (a !== null && a !== undefined && a !== "") return sanitizeText(a);
+      var el = item.getElementsByTagName(childTag || attrName)[0];
+      return el ? sanitizeText(el.textContent) : "";
+    },
+
+    parseReportItem: function (host, props, item) {
+      var hostName = sanitizeText(host.getAttribute("name") || "");
+      var rawSeverity = NessusParser.attrOrChild(item, "severity", "severity");
+      var severity = parseInt(rawSeverity, 10);
+      if (isNaN(severity)) {
+        severity = levelFromRiskFactor(NessusParser.attrOrChild(item, "risk_factor", "risk_factor"));
+      }
+
+      var portRaw = sanitizeText(NessusParser.attrOrChild(item, "port", "port"));
+      var portNumeric = /^\d+$/.test(portRaw) ? parseInt(portRaw, 10) : null;
+
+      var cves = [];
+      var cveNodes = item.getElementsByTagName("cve");
+      for (var i = 0; i < cveNodes.length; i++) {
+        var v = sanitizeText(cveNodes[i].textContent);
+        if (v) cves.push(v);
+      }
+
+      return {
+        hostName: hostName,
+        hostIP: props["host-ip"] || hostName,
+        hostnamePreferred: props.hostname || props["host-fqdn"] || props["host-rdns"] || hostName,
+        osPreferred: props["operating-system"] || props.os || "",
+        hostStart: props["HOST_START"] || "",
+        hostEnd: props["HOST_END"] || "",
+
+        port: portRaw,
+        portNumeric: portNumeric,
+        service: NessusParser.attrOrChild(item, "svc_name", "svc_name") || NessusParser.attrOrChild(item, "service_name", "service_name"),
+        protocol: NessusParser.attrOrChild(item, "protocol", "protocol"),
+
+        severity: severity,
+        severityName: levelToName(severity),
+        riskFactor: NessusParser.attrOrChild(item, "risk_factor", "risk_factor"),
+        pluginID: NessusParser.attrOrChild(item, "pluginID", "pluginID") || NessusParser.attrOrChild(item, "plugin_id", "plugin_id"),
+        pluginName: NessusParser.attrOrChild(item, "pluginName", "pluginName") || NessusParser.attrOrChild(item, "plugin_name", "plugin_name"),
+        pluginFamily: NessusParser.attrOrChild(item, "pluginFamily", "pluginFamily") || NessusParser.attrOrChild(item, "plugin_family", "plugin_family"),
+        synopsis: NessusParser.attrOrChild(item, "synopsis", "synopsis"),
+        description: NessusParser.attrOrChild(item, "description", "description"),
+        solution: NessusParser.attrOrChild(item, "solution", "solution"),
+        pluginOutput: NessusParser.attrOrChild(item, "plugin_output", "plugin_output"),
+        cves: cves
+      };
+    }
+  };
+
+  /* =========================================================================
+   * Finding Type Mapper
+   * ========================================================================= */
+
+  var FindingTypeMapper = {
+    map: function (pluginFamily) {
+      var f = String(pluginFamily || "").toLowerCase();
+
+      // OS-specific checks must be recognised before generic cloud checks so that
+      // families like "Amazon Linux Local Security Checks" become Operating System.
+      if (f.indexOf("local security checks") !== -1) return "Operating System";
+      if (f.indexOf("linux") !== -1 || f.indexOf("ubuntu") !== -1 || f.indexOf("centos") !== -1 ||
+          f.indexOf("red hat") !== -1 || f.indexOf("rocky linux") !== -1 || f.indexOf("fedora") !== -1 ||
+          f.indexOf("debian") !== -1 || f.indexOf("suse") !== -1 || f.indexOf("oracle linux") !== -1 ||
+          f.indexOf("alpine") !== -1 || f.indexOf("windows") !== -1 || f.indexOf("macos") !== -1 ||
+          f.indexOf("freebsd") !== -1 || f.indexOf("unix") !== -1) {
+        return "Operating System";
+      }
+      if (f.indexOf("aws") !== -1 || f.indexOf("amazon") !== -1 || f.indexOf("azure") !== -1 ||
+          f.indexOf("gcp") !== -1 || f.indexOf("google cloud") !== -1 || f.indexOf("cloud") !== -1) {
+        return "Cloud / AWS";
+      }
+      if (f.indexOf("database") !== -1 || f.indexOf("databases") !== -1 || f.indexOf("oracle") !== -1 ||
+          f.indexOf("mysql") !== -1 || f.indexOf("mssql") !== -1 || f.indexOf("postgresql") !== -1 ||
+          f.indexOf("mariadb") !== -1) {
+        return "Database";
+      }
+      if (f.indexOf("web server") !== -1 || f.indexOf("web_servers") !== -1 || f.indexOf("cgi abuses") !== -1 ||
+          f.indexOf("www") !== -1 || f.indexOf("web") !== -1 || f.indexOf("front") !== -1) {
+        return "Web Application";
+      }
+      if (f.indexOf("port scanner") !== -1 || f.indexOf("port scan") !== -1 || f.indexOf("service detection") !== -1) {
+        return "Network";
+      }
+      if (f.indexOf("service") !== -1 || f.indexOf("ftp") !== -1 || f.indexOf("ssh") !== -1 ||
+          f.indexOf("smb") !== -1 || f.indexOf("rpc") !== -1 || f.indexOf("mail") !== -1 ||
+          f.indexOf("dns") !== -1 || f.indexOf("http") !== -1 || f.indexOf("telnet") !== -1) {
+        return "Service";
+      }
+      if (f.indexOf("security configuration") !== -1 || f.indexOf("policy") !== -1) {
+        return "Security Configuration";
+      }
+      if (f.indexOf("setting") !== -1 || f.indexOf("configuration") !== -1 || f.indexOf("misconfig") !== -1) {
+        return "Configuration";
+      }
+      if (f.indexOf("general") !== -1 || f.indexOf("misc") !== -1) return "Other";
+      if (f.indexOf("network") !== -1) return "Network";
+      return "Other";
+    }
+  };
+
+  /* =========================================================================
+   * Register Builder
+   * ========================================================================= */
+
+  var RegisterBuilder = {
+    sortAndNumber: function (findings) {
+      var arr = findings.slice();
+      arr.sort(function (a, b) {
+        var oa = SEVERITIES[a.severityName] ? SEVERITIES[a.severityName].order : 99;
+        var ob = SEVERITIES[b.severityName] ? SEVERITIES[b.severityName].order : 99;
+        if (oa !== ob) return oa - ob;
+
+        var ipA = String(a.hostIP || "");
+        var ipB = String(b.hostIP || "");
+        var ipCmp = ipA.localeCompare(ipB, undefined, { numeric: true, sensitivity: "base" });
+        if (ipCmp !== 0) return ipCmp;
+
+        var portA = a.portNumeric;
+        var portB = b.portNumeric;
+        var portCmp = RegisterBuilder.compareOptionalNumeric(portA, portB, a.port, b.port);
+        if (portCmp !== 0) return portCmp;
+
+        var idCmp = RegisterBuilder.comparePluginID(a.pluginID, b.pluginID);
+        if (idCmp !== 0) return idCmp;
+
+        var nameA = String(a.pluginName || "");
+        var nameB = String(b.pluginName || "");
+        return nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
+      });
+
+      for (var i = 0; i < arr.length; i++) {
+        arr[i].vulnNo = "VUL-" + ("0000" + (i + 1)).slice(-4);
+      }
+      return arr;
+    },
+
+    compareOptionalNumeric: function (aNum, bNum, aStr, bStr) {
+      var hasA = aNum !== null && !isNaN(aNum);
+      var hasB = bNum !== null && !isNaN(bNum);
+      if (hasA && hasB) return aNum - bNum;
+      if (hasA !== hasB) return hasA ? -1 : 1;
+      return String(aStr || "").localeCompare(String(bStr || ""));
+    },
+
+    comparePluginID: function (a, b) {
+      var na = parseInt(a, 10);
+      var nb = parseInt(b, 10);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return String(a || "").localeCompare(String(b || ""));
+    },
+
+    buildTestingInstance: function (service, protocol) {
+      var parts = [];
+      if (service) parts.push(service);
+      if (protocol) parts.push(protocol);
+      return parts.join(" / ");
+    },
+
+    buildSystemComponent: function (hostname, os) {
+      if (hostname && os) return hostname + " - " + os;
+      if (hostname) return hostname;
+      if (os) return os;
+      return "";
+    },
+
+    buildImplication: function (description, pluginOutput) {
+      if (!description && !pluginOutput) return "";
+      var s = description || "";
+      if (pluginOutput) {
+        s = (s ? s + "\n\n" : "") + "Plugin Output:\n" + pluginOutput;
+      }
+      return s;
+    },
+
+    buildRows: function (sorted, settings) {
+      var rows = [];
+      for (var i = 0; i < sorted.length; i++) {
+        var f = sorted[i];
+        rows.push({
+          project: settings.project,
+          activityType: settings.activityType,
+          findingType: FindingTypeMapper.map(f.pluginFamily),
+          vulnNo: f.vulnNo,
+          ipUrl: f.hostIP || f.hostName,
+          port: f.portNumeric !== null ? f.portNumeric : f.port,
+          testingInstance: RegisterBuilder.buildTestingInstance(f.service, f.protocol),
+          dateRaised: settings.dateRaised,
+          expectedDateToClose: settings.expectedDateToClose,
+          status: settings.status,
+          systemComponent: RegisterBuilder.buildSystemComponent(f.hostnamePreferred, f.osPreferred),
+          observation: f.synopsis,
+          risk: f.severityName,
+          implication: RegisterBuilder.buildImplication(f.description, f.pluginOutput),
+          recommendation: f.solution,
+          comments: "",
+          vulnerability: f.pluginName,
+          owner: settings.owner
+        });
+      }
+      return rows;
+    }
+  };
+
+  /* =========================================================================
+   * Excel Exporter (minimal self-contained XLSX writer)
+   * ========================================================================= */
+
+  var COLUMNS = [
+    { key: "project", title: "Project", width: 16.5, header: "blue" },
+    { key: "activityType", title: "Activity Type", width: 18, header: "blue" },
+    { key: "findingType", title: "Finding Type", width: 18, header: "red" },
+    { key: "vulnNo", title: "Vulnerability No.", width: 16, header: "blue" },
+    { key: "ipUrl", title: "IP/URL", width: 16, header: "red" },
+    { key: "port", title: "Port", width: 10, header: "blue" },
+    { key: "testingInstance", title: "Testing Instance", width: 20, header: "blue" },
+    { key: "dateRaised", title: "Date Raised", width: 14, header: "red" },
+    { key: "expectedDateToClose", title: "Expected Date to Close", width: 18, header: "blue" },
+    { key: "status", title: "Status", width: 14, header: "blue" },
+    { key: "systemComponent", title: "System Component", width: 22, header: "blue" },
+    { key: "observation", title: "Observation", width: 38, header: "red" },
+    { key: "risk", title: "Risk", width: 14, header: "red" },
+    { key: "implication", title: "Implication", width: 45, header: "red" },
+    { key: "recommendation", title: "Recommendation", width: 45, header: "red" },
+    { key: "comments", title: "Comments", width: 28, header: "blue" },
+    { key: "vulnerability", title: "Vulnerability", width: 32, header: "red" },
+    { key: "owner", title: "Owner (Manager or Action Owner User ID)", width: 24, header: "blue" }
+  ];
+
+  var STYLE_BODY_LEFT = 0;
+  var STYLE_BODY_CENTER = 1;
+  var STYLE_DATE_LEFT = 2;
+  var STYLE_DATE_CENTER = 3;
+  var STYLE_HEADER_BLUE = 4;
+  var STYLE_HEADER_RED = 5;
+  var STYLE_RISK_CRITICAL = 6;
+  var STYLE_RISK_HIGH = 7;
+  var STYLE_RISK_MEDIUM = 8;
+  var STYLE_RISK_LOW = 9;
+  var STYLE_RISK_INFO = 10;
+
+  var RISK_STYLE = {
+    "Critical": STYLE_RISK_CRITICAL,
+    "High": STYLE_RISK_HIGH,
+    "Medium": STYLE_RISK_MEDIUM,
+    "Low": STYLE_RISK_LOW,
+    "Informational": STYLE_RISK_INFO
+  };
+
+  function colRef(index) {
+    if (index < 0 || index > 25) throw new Error("Unsupported column index " + index);
+    return String.fromCharCode(65 + index);
+  }
+
+  function cellRef(rowIndex, colIndex) {
+    return colRef(colIndex) + (rowIndex + 1);
+  }
+
+  function valuesForRow(row) {
+    return COLUMNS.map(function (c) { return row[c.key]; });
+  }
+
+  function styleForColumn(colIndex, value, row) {
+    if (colIndex === 12) { // Risk
+      return RISK_STYLE[value] || STYLE_BODY_CENTER;
+    }
+    if (colIndex === 3 || colIndex === 5) return STYLE_BODY_CENTER; // Vuln No, Port
+    if (colIndex === 7 || colIndex === 8) return STYLE_DATE_CENTER;  // Date columns
+    return STYLE_BODY_LEFT;
+  }
+
+  function buildCell(ref, style, value) {
+    if (value === null || value === undefined || value === "") {
+      return '<c r="' + ref + '" s="' + style + '"/>';
+    }
+    if (typeof value === "number" && isFinite(value)) {
+      return '<c r="' + ref + '" s="' + style + '" t="n"><v>' + value + "</v></c>";
+    }
+    // Use an explicit string cell (inlineStr) so scanner-derived values such as
+    // "=cmd", "+cmd", "-cmd" or "@cmd" are never interpreted as Excel formulas.
+    return '<c r="' + ref + '" s="' + style + '" t="inlineStr"><is><t xml:space="preserve">' +
+      escapeXml(String(value)) + "</t></is></c>";
+  }
+
+  function estimateLines(text, width) {
+    var usable = Math.max(4, width - 0.5);
+    var parts = String(text).split("\n");
+    var total = 0;
+    for (var i = 0; i < parts.length; i++) {
+      total += Math.max(1, Math.ceil(parts[i].length / usable));
+    }
+    return total;
+  }
+
+  function estimateRowHeight(values) {
+    var maxLines = 1;
+    for (var i = 0; i < COLUMNS.length; i++) {
+      var col = COLUMNS[i];
+      var val = values[i];
+      if (val === null || val === undefined || val === "") continue;
+      if (typeof val === "number") continue;
+      var lines = estimateLines(val, col.width);
+      if (lines > maxLines) maxLines = lines;
+    }
+    var height = Math.min(maxLines * 15.0, 240);
+    return height > 16 ? height : null;
+  }
+
+  function buildStylesXml() {
+    var fills = [
+      '<fill><patternFill patternType="none"/></fill>',
+      '<fill><patternFill patternType="gray125"/></fill>',
+      '<fill><patternFill patternType="solid"><fgColor rgb="FF1F4E79"/><bgColor indexed="64"/></patternFill></fill>',
+      '<fill><patternFill patternType="solid"><fgColor rgb="FFC00000"/><bgColor indexed="64"/></patternFill></fill>',
+      '<fill><patternFill patternType="solid"><fgColor rgb="FF8B0000"/><bgColor indexed="64"/></patternFill></fill>',
+      '<fill><patternFill patternType="solid"><fgColor rgb="FFE36C0A"/><bgColor indexed="64"/></patternFill></fill>',
+      '<fill><patternFill patternType="solid"><fgColor rgb="FFFFC000"/><bgColor indexed="64"/></patternFill></fill>',
+      '<fill><patternFill patternType="solid"><fgColor rgb="FF00B050"/><bgColor indexed="64"/></patternFill></fill>',
+      '<fill><patternFill patternType="solid"><fgColor rgb="FFA6A6A6"/><bgColor indexed="64"/></patternFill></fill>'
+    ].join("");
+
+    var border = '<border><left style="thin"><color rgb="FF000000"/></left>' +
+      '<right style="thin"><color rgb="FF000000"/></right>' +
+      '<top style="thin"><color rgb="FF000000"/></top>' +
+      '<bottom style="thin"><color rgb="FF000000"/></bottom>' +
+      "<diagonal/></border>";
+
+    var xfs = [
+      '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>',
+      '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>',
+      '<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>',
+      '<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>',
+      '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>',
+      '<xf numFmtId="0" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>',
+      '<xf numFmtId="0" fontId="2" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>',
+      '<xf numFmtId="0" fontId="0" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>',
+      '<xf numFmtId="0" fontId="0" fillId="6" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>',
+      '<xf numFmtId="0" fontId="0" fillId="7" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>',
+      '<xf numFmtId="0" fontId="0" fillId="8" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'
+    ].join("");
+
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<numFmts count="1"><numFmt numFmtId="164" formatCode="yyyy-mm-dd"/></numFmts>' +
+      '<fonts count="3">' +
+        '<font><sz val="11"/><name val="Calibri"/></font>' +
+        '<font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font>' +
+        '<font><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font>' +
+      '</fonts>' +
+      '<fills count="9">' + fills + "</fills>" +
+      '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>' + border + "</borders>" +
+      '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+      '<cellXfs count="11">' + xfs + "</cellXfs>" +
+      '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+      "</styleSheet>";
+  }
+
+  function buildWorksheetXml(rows, headerStyles, dateRaisedSerial, expectedCloseSerial) {
+    var parts = [];
+    var lastRow = rows.length + 1;
+    var sheetViews = '<sheetView tabSelected="1" workbookViewId="0">' +
+      '<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>' +
+      '<selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView>';
+
+    var colsXml = "<cols>" + COLUMNS.map(function (c, i) {
+      return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + c.width + '" customWidth="1"/>';
+    }).join("") + "</cols>";
+
+    var headerCells = COLUMNS.map(function (c, i) {
+      return buildCell(cellRef(0, i), headerStyles[i], c.title);
+    }).join("");
+    parts.push('<row r="1" ht="28.8" customHeight="1">' + headerCells + "</row>");
+
+    for (var r = 0; r < rows.length; r++) {
+      var row = rows[r];
+      var values = valuesForRow(row);
+      var cells = "";
+      for (var c = 0; c < COLUMNS.length; c++) {
+        var ref = cellRef(r + 1, c);
+        var style = styleForColumn(c, values[c], row);
+        var value = values[c];
+        if (c === 7 && dateRaisedSerial !== null) value = dateRaisedSerial;
+        if (c === 8 && expectedCloseSerial !== null && value !== "") value = expectedCloseSerial;
+        cells += buildCell(ref, style, value);
+      }
+      var ht = estimateRowHeight(values);
+      parts.push('<row r="' + (r + 2) + '"' + (ht ? ' ht="' + ht + '" customHeight="1"' : "") + ">" + cells + "</row>");
+    }
+
+    var sheetData = "<sheetData>" + parts.join("") + "</sheetData>";
+    var autoFilter = lastRow > 1 ? '<autoFilter ref="A1:R' + lastRow + '"/>' : "";
+
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<dimension ref="A1:R' + lastRow + '"/>' +
+      "<sheetViews>" + sheetViews + "</sheetViews>" +
+      '<sheetFormatPr defaultRowHeight="14.4"/>' +
+      colsXml +
+      sheetData +
+      autoFilter +
+      "</worksheet>";
+  }
+
+  function buildContentTypesXml() {
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      "</Types>";
+  }
+
+  function buildRootRelsXml() {
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+      "</Relationships>";
+  }
+
+  function buildWorkbookXml() {
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      '<sheets><sheet name="Vulnerabilities" sheetId="1" r:id="rId1"/></sheets>' +
+      '<calcPr calcId="0" fullCalcOnLoad="1"/>' +
+      "</workbook>";
+  }
+
+  function buildWorkbookRelsXml() {
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+      "</Relationships>";
+  }
+
+  /* --- ZIP + XLSX container --- */
+
+  var CRC_TABLE = (function () {
+    var table = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) {
+        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      }
+      table[n] = c >>> 0;
+    }
+    return table;
+  })();
+
+  function crc32(data) {
+    var crc = 0xFFFFFFFF;
+    for (var i = 0; i < data.length; i++) {
+      crc = CRC_TABLE[(crc ^ data[i]) & 0xFF] ^ (crc >>> 8);
+    }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function setU16(arr, offset, value) {
+    new DataView(arr.buffer, arr.byteOffset, arr.byteLength).setUint16(offset, value, true);
+  }
+
+  function setU32(arr, offset, value) {
+    new DataView(arr.buffer, arr.byteOffset, arr.byteLength).setUint32(offset, value, true);
+  }
+
+  function concatBytes(parts) {
+    var total = 0;
+    for (var i = 0; i < parts.length; i++) total += parts[i].length;
+    var out = new Uint8Array(total);
+    var o = 0;
+    for (i = 0; i < parts.length; i++) {
+      out.set(parts[i], o);
+      o += parts[i].length;
+    }
+    return out;
+  }
+
+  function deflateRaw(bytes) {
+    if (typeof CompressionStream === "function") {
+      try {
+        var cs = new CompressionStream("deflate-raw");
+        var stream = new Blob([bytes]).stream().pipeThrough(cs);
+        return new Response(stream).arrayBuffer().then(function (buf) {
+          var out = new Uint8Array(buf);
+          if (out.length < bytes.length) return out;
+          return bytes;
+        });
+      } catch (e) { /* fall back to store */ }
+    }
+    return Promise.resolve(bytes);
+  }
+
+  async function buildZip(entries) {
+    var enc = new TextEncoder();
+    var now = new Date();
+    var dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | Math.floor(now.getSeconds() / 2);
+    var dosDate = ((Math.max(1980, now.getFullYear()) - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+
+    var localParts = [];
+    var centralParts = [];
+    var offset = 0;
+
+    for (var e = 0; e < entries.length; e++) {
+      var nameBytes = enc.encode(entries[e].name);
+      var uncompressed = entries[e].data;
+      var compressed = await deflateRaw(uncompressed);
+      var method = compressed.length < uncompressed.length ? 8 : 0;
+      var data = method === 8 ? compressed : uncompressed;
+      var crc = crc32(uncompressed);
+
+      var local = new Uint8Array(30 + nameBytes.length + data.length);
+      setU32(local, 0, 0x04034b50);
+      setU16(local, 4, 20);
+      setU16(local, 6, 0x0800);
+      setU16(local, 8, method);
+      setU16(local, 10, dosTime);
+      setU16(local, 12, dosDate);
+      setU32(local, 14, crc);
+      setU32(local, 18, data.length);
+      setU32(local, 22, uncompressed.length);
+      setU16(local, 26, nameBytes.length);
+      setU16(local, 28, 0);
+      local.set(nameBytes, 30);
+      local.set(data, 30 + nameBytes.length);
+      localParts.push(local);
+
+      var central = new Uint8Array(46 + nameBytes.length);
+      setU32(central, 0, 0x02014b50);
+      setU16(central, 4, 20);
+      setU16(central, 6, 20);
+      setU16(central, 8, 0x0800);
+      setU16(central, 10, method);
+      setU16(central, 12, dosTime);
+      setU16(central, 14, dosDate);
+      setU32(central, 16, crc);
+      setU32(central, 20, data.length);
+      setU32(central, 24, uncompressed.length);
+      setU16(central, 28, nameBytes.length);
+      setU16(central, 30, 0);
+      setU16(central, 32, 0);
+      setU16(central, 34, 0);
+      setU16(central, 36, 0);
+      setU32(central, 38, 0);
+      setU32(central, 42, offset);
+      central.set(nameBytes, 46);
+      centralParts.push(central);
+
+      offset += local.length;
+    }
+
+    var centralBytes = concatBytes(centralParts);
+    var eocd = new Uint8Array(22);
+    setU32(eocd, 0, 0x06054b50);
+    setU16(eocd, 4, 0);
+    setU16(eocd, 6, 0);
+    setU16(eocd, 8, entries.length);
+    setU16(eocd, 10, entries.length);
+    setU32(eocd, 12, centralBytes.length);
+    setU32(eocd, 16, offset);
+    setU16(eocd, 20, 0);
+
+    return concatBytes(localParts.concat([centralBytes, eocd]));
+  }
+
+  function utf8(value) {
+    return new TextEncoder().encode(value);
+  }
+
+  var ExcelExporter = {
+    export: async function (options) {
+      var rows = options.rows;
+      var dateRaisedSerial = options.dateRaisedSerial;
+      var expectedCloseSerial = options.expectedCloseSerial;
+
+      var headerStyles = COLUMNS.map(function (c) {
+        return c.header === "red" ? STYLE_HEADER_RED : STYLE_HEADER_BLUE;
+      });
+
+      var sheetXml = buildWorksheetXml(rows, headerStyles, dateRaisedSerial, expectedCloseSerial);
+      var stylesXml = buildStylesXml();
+
+      var entries = [
+        { name: "[Content_Types].xml", data: utf8(buildContentTypesXml()) },
+        { name: "_rels/.rels", data: utf8(buildRootRelsXml()) },
+        { name: "xl/workbook.xml", data: utf8(buildWorkbookXml()) },
+        { name: "xl/_rels/workbook.xml.rels", data: utf8(buildWorkbookRelsXml()) },
+        { name: "xl/styles.xml", data: utf8(stylesXml) },
+        { name: "xl/worksheets/sheet1.xml", data: utf8(sheetXml) }
+      ];
+
+      var zipBytes = await buildZip(entries);
+      return new Blob([zipBytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    }
+  };
+
+  /* =========================================================================
+   * UI wiring
+   * ========================================================================= */
+
+  var parsedData = null;
+  var currentFileName = "";
+
+  function $(id) { return document.getElementById(id); }
+
+  function setMessage(text, type) {
+    var el = $("messageBox");
+    if (!text) { el.className = ""; el.textContent = ""; return; }
+    el.className = "message " + (type || "info");
+    el.textContent = text;
+  }
+
+  function showError(msg) {
+    setMessage(msg, "error");
+  }
+
+  function getSelectedSeverities() {
+    var selected = new Set();
+    if ($("sevCritical").checked) selected.add("Critical");
+    if ($("sevHigh").checked) selected.add("High");
+    if ($("sevMedium").checked) selected.add("Medium");
+    if ($("sevLow").checked) selected.add("Low");
+    if ($("sevInfo").checked) selected.add("Informational");
+    return selected;
+  }
+
+  function updateSelectedCount() {
+    var selected = getSelectedSeverities();
+    var total = 0;
+    if (parsedData) {
+      for (var i = 0; i < parsedData.findings.length; i++) {
+        if (selected.has(parsedData.findings[i].severityName)) total++;
+      }
+    }
+    $("selectedCount").textContent = total.toLocaleString() + " findings selected for export";
+    var exportBtn = $("exportBtn");
+    exportBtn.disabled = !(parsedData && selected.size > 0 && total > 0);
+  }
+
+  function resetState() {
+    parsedData = null;
+    currentFileName = "";
+    $("hostCount").textContent = "–";
+    $("totalFindings").textContent = "–";
+    $("countCritical").textContent = "0";
+    $("countHigh").textContent = "0";
+    $("countMedium").textContent = "0";
+    $("countLow").textContent = "0";
+    $("countInfo").textContent = "0";
+    $("sevCriticalCount").textContent = "0";
+    $("sevHighCount").textContent = "0";
+    $("sevMediumCount").textContent = "0";
+    $("sevLowCount").textContent = "0";
+    $("sevInfoCount").textContent = "0";
+    $("exportBtn").disabled = true;
+    setMessage("");
+  }
+
+  function renderSummary(result) {
+    $("hostCount").textContent = result.hostCount.toLocaleString();
+    $("totalFindings").textContent = result.totalFindings.toLocaleString();
+    var counts = { Critical: 0, High: 0, Medium: 0, Low: 0, Informational: 0 };
+    for (var i = 0; i < result.findings.length; i++) {
+      var n = result.findings[i].severityName;
+      if (counts[n] !== undefined) counts[n]++;
+    }
+    $("countCritical").textContent = counts.Critical.toLocaleString();
+    $("countHigh").textContent = counts.High.toLocaleString();
+    $("countMedium").textContent = counts.Medium.toLocaleString();
+    $("countLow").textContent = counts.Low.toLocaleString();
+    $("countInfo").textContent = counts.Informational.toLocaleString();
+    $("sevCriticalCount").textContent = counts.Critical.toLocaleString();
+    $("sevHighCount").textContent = counts.High.toLocaleString();
+    $("sevMediumCount").textContent = counts.Medium.toLocaleString();
+    $("sevLowCount").textContent = counts.Low.toLocaleString();
+    $("sevInfoCount").textContent = counts.Informational.toLocaleString();
+  }
+
+  function readFileText(file) {
+    if (typeof file.text === "function") return file.text();
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(reader.result); };
+      reader.onerror = function () { reject(reader.error); };
+      reader.readAsText(file);
+    });
+  }
+
+  async function handleFile(file) {
+    resetState();
+    if (!file) return;
+    if (file.size === 0) {
+      showError("The selected file is empty.");
+      return;
+    }
+    currentFileName = file.name || "";
+    $("fileName").textContent = currentFileName || "No file selected.";
+    setMessage("Reading Nessus report...", "info");
+
+    try {
+      var text = await readFileText(file);
+      var result = await NessusParser.parse(text, function (hostsProcessed, findingsProcessed) {
+        setMessage("Reading Nessus report... Hosts processed: " + hostsProcessed.toLocaleString() +
+          " · Findings processed: " + findingsProcessed.toLocaleString(), "info");
+      });
+      parsedData = result;
+      $("dateRaised").value = result.earliestHostStart || "";
+      renderSummary(result);
+      updateSelectedCount();
+      setMessage("Ready. " + result.hostCount.toLocaleString() + " host(s), " +
+        result.totalFindings.toLocaleString() + " finding(s) loaded.", "success");
+    } catch (err) {
+      showError(err.message || "The file could not be processed.");
+    }
+  }
+
+  function getSettings() {
+    return {
+      project: sanitizeText($("project").value),
+      activityType: sanitizeText($("activityType").value),
+      dateRaised: $("dateRaised").value,
+      expectedDateToClose: $("expectedDateClose").value,
+      status: $("status").value,
+      owner: sanitizeText($("owner").value)
+    };
+  }
+
+  function buildOutputFilename(fileName) {
+    var base = String(fileName || "").replace(/\.[^.]+$/, "").trim();
+    if (!base) base = "Nessus";
+    return base + "_Vulnerability_Register.xlsx";
+  }
+
+  function downloadBlob(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  }
+
+  async function handleExport() {
+    if (!parsedData) return;
+    var selected = getSelectedSeverities();
+    if (!selected.size) {
+      showError(Validation.ERR_NO_SELECTED);
+      return;
+    }
+    var filtered = [];
+    for (var i = 0; i < parsedData.findings.length; i++) {
+      if (selected.has(parsedData.findings[i].severityName)) filtered.push(parsedData.findings[i]);
+    }
+    if (!filtered.length) {
+      showError(Validation.ERR_NO_SELECTED);
+      return;
+    }
+
+    var settings = getSettings();
+    var sorted = RegisterBuilder.sortAndNumber(filtered);
+    var rows = RegisterBuilder.buildRows(sorted, settings);
+
+    var dateRaisedSerial = dateToSerial(settings.dateRaised);
+    var expectedCloseSerial = dateToSerial(settings.expectedDateToClose);
+    var filename = buildOutputFilename(currentFileName);
+
+    setMessage("Generating Excel workbook...", "info");
+    try {
+      var blob = await ExcelExporter.export({ rows: rows, dateRaisedSerial: dateRaisedSerial, expectedCloseSerial: expectedCloseSerial });
+      downloadBlob(blob, filename);
+      setMessage("Excel register generated: " + filename, "success");
+    } catch (err) {
+      showError("Excel generation failed: " + (err && err.message ? err.message : String(err)));
+    }
+  }
+
+  function init() {
+    var dropZone = $("dropZone");
+    var fileInput = $("fileInput");
+    var browseBtn = $("browseBtn");
+
+    browseBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      fileInput.click();
+    });
+
+    dropZone.addEventListener("click", function () { fileInput.click(); });
+
+    dropZone.addEventListener("dragover", function (e) {
+      e.preventDefault();
+      dropZone.classList.add("dragover");
+    });
+
+    dropZone.addEventListener("dragleave", function () {
+      dropZone.classList.remove("dragover");
+    });
+
+    dropZone.addEventListener("drop", function (e) {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener("change", function (e) {
+      if (e.target.files && e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+      }
+      fileInput.value = "";
+    });
+
+    ["sevCritical", "sevHigh", "sevMedium", "sevLow", "sevInfo"].forEach(function (id) {
+      $(id).addEventListener("change", updateSelectedCount);
+    });
+
+    $("exportBtn").addEventListener("click", handleExport);
+
+    updateSelectedCount();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
