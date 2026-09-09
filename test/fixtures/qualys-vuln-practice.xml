@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SCAN value="scan/qualys-vuln-practice">
+  <HEADER><KEY value="DATE">2026-09-09T08:00:00Z</KEY></HEADER>
+  <IP value="192.0.2.80" name="vuln-practice.example.test">
+    <VULNS>
+      <CAT value="General remote services" port="2222" protocol="tcp">
+        <VULN number="40001" severity="4">
+          <TITLE>Vulnerability section finding</TITLE>
+          <LAST_UPDATE>2026-09-08T12:00:00Z</LAST_UPDATE>
+          <PCI_FLAG>1</PCI_FLAG>
+          <DIAGNOSIS>Vulnerability diagnosis.</DIAGNOSIS>
+          <CONSEQUENCE>Vulnerability impact.</CONSEQUENCE>
+          <SOLUTION>Vulnerability remediation.</SOLUTION>
+          <RESULT>Vulnerable service detected.</RESULT>
+        </VULN>
+      </CAT>
+    </VULNS>
+    <PRACTICES>
+      <CAT value="CGI" port="443" protocol="tcp">
+        <PRACTICE number="50001" severity="5" cveid="CVE-2026-50001">
+          <TITLE>Potential vulnerability section finding</TITLE>
+          <LAST_UPDATE>2026-09-09T01:00:00Z</LAST_UPDATE>
+          <PCI_FLAG>0</PCI_FLAG>
+          <CVE_ID_LIST><CVE_ID>CVE-2026-50001</CVE_ID><CVE_ID>CVE-2026-50002</CVE_ID></CVE_ID_LIST>
+          <DIAGNOSIS>Potential vulnerability diagnosis.</DIAGNOSIS>
+          <CONSEQUENCE>Potential vulnerability impact.</CONSEQUENCE>
+          <SOLUTION>Potential vulnerability remediation.</SOLUTION>
+          <RESULT>Potential vulnerability detected.</RESULT>
+        </PRACTICE>
+      </CAT>
+    </PRACTICES>
+  </IP>
+</SCAN>

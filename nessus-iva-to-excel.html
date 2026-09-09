@@ -343,8 +343,8 @@
     ERR_NOT_QUALYS: "The selected file is not a valid Qualys Vulnerability Scan XML report.",
     ERR_NO_QUALYS_HOST: "The Qualys SCAN report does not contain any <IP> host entries.",
     ERR_NO_QUALYS_CATEGORY: "The Qualys SCAN report does not contain any <CAT> finding categories under its hosts.",
-    ERR_NO_QUALYS_FINDING: "No Qualys <INFO> or <SERVICE> findings were found in the report.",
-    ERR_NO_VALID_QUALYS_FINDINGS: "No valid Qualys findings could be imported. Each <INFO> or <SERVICE> finding needs a numeric number (QID) and severity attribute.",
+    ERR_NO_QUALYS_FINDING: "No Qualys <INFO>, <SERVICE>, <VULN>, or <PRACTICE> findings were found in the report.",
+    ERR_NO_VALID_QUALYS_FINDINGS: "No valid Qualys findings could be imported. Each Qualys finding needs a numeric number (QID) and severity attribute.",
     ERR_NO_SELECTED: "No vulnerability findings selected for export. Enable at least one severity above."
   };
 
@@ -398,14 +398,29 @@
     h4: true, h5: true, h6: true, tr: true
   };
 
+  function decodeQualysCdataEntities(value) {
+    if (!value || String(value).indexOf("&") === -1) return value || "";
+
+    // Qualys commonly wraps scanner output in CDATA while retaining escaped
+    // entities such as &lt; and &quot; inside that CDATA. Decode one content-level
+    // pass with a browser parser, without using regular expressions for XML.
+    var decoder = document.createElement("textarea");
+    decoder.innerHTML = String(value);
+    return decoder.value;
+  }
+
   function qualysElementText(element) {
     if (!element) return "";
     var output = [];
 
     function walk(node) {
       if (!node) return;
-      if (node.nodeType === 3 || node.nodeType === 4) {
+      if (node.nodeType === 3) {
         output.push(node.nodeValue || "");
+        return;
+      }
+      if (node.nodeType === 4) {
+        output.push(decodeQualysCdataEntities(node.nodeValue || ""));
         return;
       }
       if (node.nodeType !== 1) return;
@@ -721,15 +736,17 @@
     },
 
     getFindingNodes: function (category) {
-      // INFO and SERVICE are sibling finding shapes in the Qualys scan DTD.
-      // Direct children avoid accidentally treating markup inside RESULT as a
-      // second scanner finding.
+      // Classic Qualys scan exports place the same finding shape in four report
+      // sections: INFOS/INFO, SERVICES/SERVICE, VULNS/VULN, and
+      // PRACTICES/PRACTICE. Treat each as a scanner finding. Direct children
+      // avoid accidentally treating markup inside RESULT as another record.
       var children = category.childNodes || [];
       var findings = [];
+      var findingNames = { info: true, service: true, vuln: true, practice: true };
       for (var i = 0; i < children.length; i++) {
         if (children[i].nodeType !== 1) continue;
         var name = xmlElementName(children[i]);
-        if (name === "info" || name === "service") findings.push(children[i]);
+        if (findingNames[name]) findings.push(children[i]);
       }
       return findings;
     },
@@ -762,6 +779,21 @@
         if (cells.length) output.push(cells.join("\t"));
       }
       return sanitizeText(output.join("\n"));
+    },
+
+    extractCVEs: function (findingNode) {
+      // Preserve CVEs that the scan actually provides. They remain in the common
+      // model only because the existing workbook has no CVE column.
+      var cves = [];
+      function add(value) {
+        var cve = sanitizeText(value);
+        if (cve && cves.indexOf(cve) === -1) cves.push(cve);
+      }
+
+      add(attributeText(findingNode, "cveid"));
+      var cveNodes = descendantElementsByName(findingNode, "CVE_ID");
+      for (var i = 0; i < cveNodes.length; i++) add(qualysElementText(cveNodes[i]));
+      return cves;
     },
 
     parseFinding: function (host, category, findingNode, scanDate, warnings) {
@@ -830,7 +862,7 @@
         solution: solution,
         pluginOutput: result,
         outputLabel: result ? "Result" : "",
-        cves: [],
+        cves: QualysParser.extractCVEs(findingNode),
 
         lastUpdate: lastUpdate,
         pciFlag: qualysElementText(firstDirectChildElementByName(findingNode, "PCI_FLAG")),

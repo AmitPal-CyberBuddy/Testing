@@ -142,6 +142,22 @@ test("Qualys SERVICE findings normalize exactly like INFO findings", async () =>
   assert.equal(finding.protocol, "tcp");
 });
 
+test("Qualys VULN and PRACTICE sections are imported alongside INFO and SERVICE", async () => {
+  const result = await app.QualysParser.parse(fixture("qualys-vuln-practice.xml"));
+  const vuln = result.findings.find((finding) => finding.findingKind === "VULN");
+  const practice = result.findings.find((finding) => finding.findingKind === "PRACTICE");
+
+  assert.equal(result.totalFindings, 2);
+  assert.ok(vuln);
+  assert.ok(practice);
+  assert.equal(vuln.pluginID, "40001");
+  assert.equal(vuln.severityName, "High");
+  assert.equal(vuln.portNumeric, 2222);
+  assert.equal(practice.pluginID, "50001");
+  assert.equal(practice.severityName, "Critical");
+  assert.deepEqual(Array.from(practice.cves), ["CVE-2026-50001", "CVE-2026-50002"]);
+});
+
 test("Qualys parser processes multiple hosts and categories", async () => {
   const result = await app.QualysParser.parse(fixture("qualys-multiple.xml"));
 
@@ -181,6 +197,18 @@ test("Qualys XML entities are decoded by the XML parser", async () => {
 
   assert.equal(finding.pluginName, "Entity \"test\" & comparison");
   assert.equal(finding.description, "Observed A < B and C > D with \"quoted\" values & symbols.");
+});
+
+test("Qualys entities embedded inside CDATA scanner output are decoded once", async () => {
+  const xml = [
+    "<SCAN><IP value=\"192.0.2.72\"><INFOS><CAT value=\"CGI\">",
+    "<INFO number=\"72001\" severity=\"1\"><TITLE>CDATA entities</TITLE>",
+    "<RESULT><![CDATA[&lt;html&gt;&lt;body&gt;&quot;quoted&quot; &amp; readable&lt;/body&gt;&lt;/html&gt;]]></RESULT>",
+    "</INFO></CAT></INFOS></IP></SCAN>"
+  ].join("");
+  const result = await app.QualysParser.parse(xml);
+
+  assert.equal(result.findings[0].pluginOutput, "<html><body>\"quoted\" & readable</body></html>");
 });
 
 test("Qualys HTML/XML block content keeps meaningful line boundaries", async () => {
@@ -305,7 +333,7 @@ test("Qualys structural validation returns actionable errors", async () => {
   );
   await assert.rejects(
     () => app.QualysParser.parse("<SCAN><IP value=\"192.0.2.60\"><INFOS><CAT value=\"General\" /></INFOS></IP></SCAN>"),
-    /No Qualys <INFO> or <SERVICE> findings/
+    /No Qualys <INFO>, <SERVICE>, <VULN>, or <PRACTICE> findings/
   );
 });
 

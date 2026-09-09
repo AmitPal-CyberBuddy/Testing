@@ -47,8 +47,8 @@ The project intentionally remains a single self-contained HTML application. Scan
 | `CAT @value` | `pluginFamily` | Existing finding-type mapper → `Finding Type` |
 | `CAT @port` | `port` / `portNumeric` | `Port` |
 | `CAT @protocol` | `protocol` | `Testing Instance` |
-| `INFO @number` or `SERVICE @number` | `pluginID` | Retained for common-model sorting; no dedicated pre-existing Excel column |
-| `INFO @severity` or `SERVICE @severity` | `severity` / `severityName` | `Risk` |
+| `INFO`, `SERVICE`, `VULN`, or `PRACTICE` `@number` | `pluginID` | Retained for common-model sorting; no dedicated pre-existing Excel column |
+| `INFO`, `SERVICE`, `VULN`, or `PRACTICE` `@severity` | `severity` / `severityName` | `Risk` |
 | `TITLE` | `pluginName` and `synopsis` | `Vulnerability` and `Observation` |
 | `DIAGNOSIS` | `description` | `Implication` |
 | `CONSEQUENCE` | `impact` | `Implication` under **Impact / Consequence** |
@@ -57,7 +57,7 @@ The project intentionally remains a single self-contained HTML application. Scan
 | `HEADER/KEY[@value="DATE"]` | report date | Default value for the existing `Date Raised` control |
 | `LAST_UPDATE` | `lastUpdate` | Retained in the normalized finding; no dedicated pre-existing Excel column |
 
-Both `INFO` and `SERVICE` are treated as findings. Multiple `IP` hosts and multiple `CAT` categories are processed. Missing optional category attributes such as `port`, `protocol`, `misc`, and `RESULT @format` are safely represented as empty values.
+Both `INFO` and `SERVICE` are treated as findings, along with the `VULN` and `PRACTICE` finding shapes used by classic Qualys `VULNS` and `PRACTICES` sections. Multiple `IP` hosts and multiple `CAT` categories are processed. Missing optional category attributes such as `port`, `protocol`, `misc`, and `RESULT @format` are safely represented as empty values.
 
 ### Qualys severity mapping
 
@@ -107,7 +107,7 @@ Findings are sorted by severity (Critical → High → Medium → Low → Inform
 
 ## Error handling
 
-The application reports actionable errors for empty or invalid XML, unsupported XML roots, missing Nessus reports/hosts/findings, and missing required Qualys `IP`, `CAT`, or `INFO`/`SERVICE` structure. A malformed Qualys finding with a missing/non-numeric QID or unsupported/missing numeric severity is skipped while the remaining report is imported; the UI reports how many records were skipped.
+The application reports actionable errors for empty or invalid XML, unsupported XML roots, missing Nessus reports/hosts/findings, and missing required Qualys `IP`, `CAT`, or finding structure. A malformed Qualys `INFO`, `SERVICE`, `VULN`, or `PRACTICE` record with a missing/non-numeric QID or unsupported/missing numeric severity is skipped while the remaining report is imported; the UI reports how many records were skipped.
 
 ## Privacy
 
@@ -121,7 +121,7 @@ The application is **100% client-side and offline**:
 
 ## Tests
 
-Representative synthetic fixtures cover Qualys `INFO` and `SERVICE` records, multiple hosts/categories, missing optional attributes, CDATA, entities, multiline and table `RESULT` content, every supported severity, format detection, malformed findings, Nessus regression behavior, and the generated workbook contract.
+Representative synthetic fixtures cover Qualys `INFO`, `SERVICE`, `VULN`, and `PRACTICE` records, multiple hosts/categories, missing optional attributes, CDATA, entities (including escaped entities within CDATA), multiline and table `RESULT` content, every supported severity, format detection, malformed findings, Nessus regression behavior, and the generated workbook contract.
 
 ```bash
 npm ci
@@ -132,7 +132,7 @@ npm test
 
 ## Limitations
 
-The existing register does not have dedicated columns for a Qualys QID, `LAST_UPDATE`, `PCI_FLAG`, category `misc`, source severity label, or `RESULT` format. These are retained where useful in the normalized model, but are not given new Excel columns. `RESULT`, diagnosis, and consequence are preserved through the existing `Implication` column. The application does not fabricate missing CVE/CVSS values or perform external vulnerability enrichment.
+The existing register does not have dedicated columns for a Qualys QID, `LAST_UPDATE`, `PCI_FLAG`, category `misc`, source severity label, CVE, or `RESULT` format. These are retained where useful in the normalized model, but are not given new Excel columns. `RESULT`, diagnosis, and consequence are preserved through the existing `Implication` column. CVEs present in `VULN` or `PRACTICE` records are preserved in the model; the application does not fabricate missing CVE/CVSS values or perform external vulnerability enrichment.
 
 ## License
 
