@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SCAN value="scan/qualys-multiple">
+  <HEADER>
+    <KEY value="DATE">2026-07-17T11:00:00Z</KEY>
+  </HEADER>
+  <IP value="192.0.2.30" name="web.example.test">
+    <INFOS>
+      <CAT value="CGI" port="80" protocol="tcp" misc="web check">
+        <INFO number="20001" severity="5">
+          <TITLE>CDATA evidence finding</TITLE>
+          <LAST_UPDATE>2026-07-03</LAST_UPDATE>
+          <PCI_FLAG>1</PCI_FLAG>
+          <DIAGNOSIS><![CDATA[The response contains <script>content</script> and must remain readable.]]></DIAGNOSIS>
+          <CONSEQUENCE><![CDATA[An attacker could use the observed response.]]></CONSEQUENCE>
+          <SOLUTION><![CDATA[Encode output before returning it.]]></SOLUTION>
+          <RESULT><![CDATA[GET / HTTP/1.1
+Host: web.example.test
+Connection: Keep-Alive
+
+HTTP/1.1 200 OK
+Server: Example]]></RESULT>
+        </INFO>
+      </CAT>
+      <CAT value="Firewall">
+        <INFO number="20002" severity="2">
+          <TITLE>Entity &quot;test&quot; &amp; comparison</TITLE>
+          <DIAGNOSIS>Observed A &lt; B and C &gt; D with &quot;quoted&quot; values &amp; symbols.</DIAGNOSIS>
+          <CONSEQUENCE>Review the exposed policy.</CONSEQUENCE>
+          <SOLUTION>Restrict the policy to approved sources.</SOLUTION>
+          <RESULT>Firewall rule is reachable.</RESULT>
+        </INFO>
+      </CAT>
+    </INFOS>
+  </IP>
+  <IP value="192.0.2.31" name="services.example.test">
+    <INFOS>
+      <CAT value="Services" port="443" protocol="tcp">
+        <SERVICE number="34012" severity="1">
+          <TITLE>Service table output</TITLE>
+          <DIAGNOSIS>Service discovery returned the following rows.</DIAGNOSIS>
+          <CONSEQUENCE>Open services should be reviewed.</CONSEQUENCE>
+          <SOLUTION>Disable services that are not required.</SOLUTION>
+          <RESULT format="table"><TABLE><TR><TH>Port</TH><TH>Service</TH><TH>Description</TH></TR><TR><TD>80</TD><TD>http</TD><TD>Web Server</TD></TR><TR><TD>443</TD><TD>https</TD><TD>Secure Web Server</TD></TR></TABLE></RESULT>
+        </SERVICE>
+      </CAT>
+    </INFOS>
+  </IP>
+</SCAN>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SCAN value="scan/qualys-service">
+  <HEADER><KEY value="DATE">2026-07-16</KEY></HEADER>
+  <IP value="192.0.2.20" name="service.example.test">
+    <INFOS>
+      <CAT value="Services" port="22" protocol="tcp" service="ssh">
+        <SERVICE number="34011" severity="4">
+          <TITLE>SSH service finding</TITLE>
+          <LAST_UPDATE>2026-07-02</LAST_UPDATE>
+          <PCI_FLAG>0</PCI_FLAG>
+          <DIAGNOSIS>SSH service configuration requires review.</DIAGNOSIS>
+          <CONSEQUENCE>Service access may be exposed to unnecessary risk.</CONSEQUENCE>
+          <SOLUTION>Apply the recommended SSH hardening settings.</SOLUTION>
+          <RESULT>SSH-2.0-OpenSSH_9.0</RESULT>
+        </SERVICE>
+      </CAT>
+    </INFOS>
+  </IP>
+</SCAN>

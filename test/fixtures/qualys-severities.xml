@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SCAN value="scan/qualys-severities">
+  <IP value="192.0.2.40" name="severity.example.test">
+    <INFOS>
+      <CAT value="General" port="1" protocol="tcp">
+        <INFO number="10000" severity="0"><TITLE>Severity 0</TITLE></INFO>
+        <INFO number="10001" severity="1"><TITLE>Severity 1</TITLE></INFO>
+        <INFO number="10002" severity="2"><TITLE>Severity 2</TITLE></INFO>
+        <INFO number="10003" severity="3"><TITLE>Severity 3</TITLE></INFO>
+        <INFO number="10004" severity="4"><TITLE>Severity 4</TITLE></INFO>
+        <INFO number="10005" severity="5"><TITLE>Severity 5</TITLE></INFO>
+      </CAT>
+    </INFOS>
+  </IP>
+</SCAN>

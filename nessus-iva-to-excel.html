@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nessus IVA → Excel Vulnerability Register</title>
+<title>Nessus &amp; Qualys → Excel Vulnerability Register</title>
 <style>
   :root {
     --blue: #1F4E79;
@@ -158,17 +158,17 @@
 <body>
 <main>
   <header>
-    <h1>Nessus IVA → Excel Vulnerability Register</h1>
-    <p>Convert a Tenable Nessus .nessus scan into a formatted Excel vulnerability register.</p>
+    <h1>Nessus &amp; Qualys → Excel Vulnerability Register</h1>
+    <p>Convert Tenable Nessus or Qualys Vulnerability Scan XML into the same formatted Excel vulnerability register.</p>
   </header>
 
   <section class="card" id="scanCard">
-    <h2>1. Nessus Scan</h2>
+    <h2>1. Scan Report</h2>
     <div id="dropZone">
-      <strong>Drag &amp; drop your .nessus file here</strong>
+      <strong>Drag &amp; drop a Nessus .nessus or Qualys .xml file here</strong>
       <span>or</span>
       <button type="button" class="browse" id="browseBtn">Browse</button>
-      <input type="file" id="fileInput" accept=".nessus,.xml">
+      <input type="file" id="fileInput" accept=".nessus,.xml,application/xml,text/xml">
       <p id="fileName">No file selected.</p>
     </div>
   </section>
@@ -329,38 +329,167 @@
   }
 
   /* =========================================================================
-   * Validation
+   * Validation and XML helpers
    * ========================================================================= */
 
   var Validation = {
-    ERR_INVALID_XML: "The selected file could not be read as a valid Nessus v2 report.",
+    ERR_EMPTY_XML: "The selected file is empty or contains only whitespace.",
+    ERR_INVALID_XML: "The selected file could not be read as valid XML. Check that it is a complete Nessus v2 or Qualys scan export.",
+    ERR_UNSUPPORTED_FORMAT: "Unsupported XML format. Upload a Tenable Nessus v2 report or a Qualys Vulnerability Scan XML report.",
     ERR_NOT_NESSUS: "The selected file is not a valid Nessus v2 report.",
     ERR_NO_REPORT: "The selected file does not contain a Nessus <Report> section.",
     ERR_NO_HOST: "No <ReportHost> entries were found in this Nessus report.",
     ERR_NO_FINDINGS: "No vulnerability findings were found in this Nessus report.",
+    ERR_NOT_QUALYS: "The selected file is not a valid Qualys Vulnerability Scan XML report.",
+    ERR_NO_QUALYS_HOST: "The Qualys SCAN report does not contain any <IP> host entries.",
+    ERR_NO_QUALYS_CATEGORY: "The Qualys SCAN report does not contain any <CAT> finding categories under its hosts.",
+    ERR_NO_QUALYS_FINDING: "No Qualys <INFO>, <SERVICE>, <VULN>, or <PRACTICE> findings were found in the report.",
+    ERR_NO_VALID_QUALYS_FINDINGS: "No valid Qualys findings could be imported. Each Qualys finding needs a numeric number (QID) and severity attribute.",
     ERR_NO_SELECTED: "No vulnerability findings selected for export. Enable at least one severity above."
   };
 
+  function xmlElementName(element) {
+    if (!element) return "";
+    var name = element.localName || element.nodeName || element.tagName || "";
+    // localName is namespace-safe; the split also supports older XML DOMs that
+    // expose a qualified nodeName such as q:SCAN instead.
+    return String(name).split(":").pop().toLowerCase();
+  }
+
+  function directChildElementsByName(parent, name) {
+    var matches = [];
+    if (!parent) return matches;
+    var target = String(name || "").toLowerCase();
+    var children = parent.childNodes || [];
+    for (var i = 0; i < children.length; i++) {
+      if (children[i].nodeType === 1 && xmlElementName(children[i]) === target) {
+        matches.push(children[i]);
+      }
+    }
+    return matches;
+  }
+
+  function firstDirectChildElementByName(parent, name) {
+    var matches = directChildElementsByName(parent, name);
+    return matches.length ? matches[0] : null;
+  }
+
+  function descendantElementsByName(parent, name) {
+    var matches = [];
+    if (!parent || typeof parent.getElementsByTagName !== "function") return matches;
+    var target = String(name || "").toLowerCase();
+    var elements = parent.getElementsByTagName("*");
+    for (var i = 0; i < elements.length; i++) {
+      if (xmlElementName(elements[i]) === target) matches.push(elements[i]);
+    }
+    return matches;
+  }
+
+  function elementText(element) {
+    return element ? sanitizeText(element.textContent) : "";
+  }
+
+  // textContent correctly decodes entities and CDATA, but adjacent HTML/XML
+  // block nodes (for example <p>one</p><p>two</p>) otherwise lose their visual
+  // separation. These names preserve a line break for common scanner output.
+  var QUALYS_BLOCK_ELEMENT_NAMES = {
+    br: true, p: true, div: true, li: true, ul: true, ol: true,
+    pre: true, blockquote: true, h1: true, h2: true, h3: true,
+    h4: true, h5: true, h6: true, tr: true
+  };
+
+  function decodeQualysCdataEntities(value) {
+    if (!value || String(value).indexOf("&") === -1) return value || "";
+
+    // Qualys commonly wraps scanner output in CDATA while retaining escaped
+    // entities such as &lt; and &quot; inside that CDATA. Decode one content-level
+    // pass with a browser parser, without using regular expressions for XML.
+    var decoder = document.createElement("textarea");
+    decoder.innerHTML = String(value);
+    return decoder.value;
+  }
+
+  function qualysElementText(element) {
+    if (!element) return "";
+    var output = [];
+
+    function walk(node) {
+      if (!node) return;
+      if (node.nodeType === 3) {
+        output.push(node.nodeValue || "");
+        return;
+      }
+      if (node.nodeType === 4) {
+        output.push(decodeQualysCdataEntities(node.nodeValue || ""));
+        return;
+      }
+      if (node.nodeType !== 1) return;
+
+      var isBlock = !!QUALYS_BLOCK_ELEMENT_NAMES[xmlElementName(node)];
+      if (isBlock) output.push("\n");
+      var children = node.childNodes || [];
+      for (var i = 0; i < children.length; i++) walk(children[i]);
+      if (isBlock) output.push("\n");
+    }
+
+    walk(element);
+    return sanitizeText(output.join(""));
+  }
+
+  function attributeText(element, name) {
+    if (!element || typeof element.getAttribute !== "function") return "";
+    var value = element.getAttribute(name);
+    return value === null || value === undefined ? "" : sanitizeText(value);
+  }
+
+  function parseXmlDocument(text) {
+    if (text === null || text === undefined || String(text).trim() === "") {
+      throw new Error(Validation.ERR_EMPTY_XML);
+    }
+
+    var doc = new DOMParser().parseFromString(String(text), "text/xml");
+    var root = doc && doc.documentElement;
+    if (!root || xmlElementName(root) === "parsererror" || descendantElementsByName(doc, "parsererror").length > 0) {
+      throw new Error(Validation.ERR_INVALID_XML);
+    }
+    return doc;
+  }
+
+  function isNessusDocument(doc) {
+    var rootName = xmlElementName(doc && doc.documentElement);
+    return rootName === "nessusclientdata" || rootName === "nessusclientdata_v2";
+  }
+
+  function isQualysDocument(doc) {
+    return xmlElementName(doc && doc.documentElement) === "scan";
+  }
+
   /* =========================================================================
    * Nessus v2 Parser
+   *
+   * The normalized object returned here is intentionally unchanged. Qualys
+   * findings are normalized to these same keys before reaching RegisterBuilder.
    * ========================================================================= */
 
   var NessusParser = {
     parseXml: function (text) {
-      var doc = new DOMParser().parseFromString(text, "text/xml");
-      if (doc.getElementsByTagName("parsererror").length > 0) {
-        throw new Error(Validation.ERR_INVALID_XML);
-      }
-      var root = doc.documentElement;
-      var rootName = (root.localName || root.tagName || "").toLowerCase();
-      if (rootName !== "nessusclientdata" && rootName !== "nessusclientdata_v2") {
+      var doc = parseXmlDocument(text);
+      if (!isNessusDocument(doc)) {
         throw new Error(Validation.ERR_NOT_NESSUS);
       }
       return doc;
     },
 
     parse: async function (text, onProgress) {
-      var doc = NessusParser.parseXml(text);
+      return NessusParser.parseDocument(NessusParser.parseXml(text), onProgress);
+    },
+
+    parseDocument: async function (doc, onProgress) {
+      if (!isNessusDocument(doc)) {
+        throw new Error(Validation.ERR_NOT_NESSUS);
+      }
+      onProgress = typeof onProgress === "function" ? onProgress : function () {};
+
       var reports = doc.getElementsByTagName("Report");
       if (reports.length === 0) {
         throw new Error(Validation.ERR_NO_REPORT);
@@ -485,6 +614,302 @@
   };
 
   /* =========================================================================
+   * Qualys Vulnerability Scan XML Parser
+   * ========================================================================= */
+
+  /*
+   * Classic Qualys scan XML ranks QIDs as 1 (Minimal), 2 (Medium),
+   * 3 (Serious), 4 (Critical), and 5 (Urgent). The existing register has the
+   * five Nessus-oriented labels below, so this maps rank-for-rank to retain
+   * priority ordering, filtering, and Excel risk styling. A legacy 0 value is
+   * treated as Informational defensively for information-only records.
+   */
+  var QUALYS_SEVERITY_MAP = {
+    "0": { level: 0, severityName: "Informational", sourceName: "Informational" },
+    "1": { level: 0, severityName: "Informational", sourceName: "Minimal" },
+    "2": { level: 1, severityName: "Low", sourceName: "Medium" },
+    "3": { level: 2, severityName: "Medium", sourceName: "Serious" },
+    "4": { level: 3, severityName: "High", sourceName: "Critical" },
+    "5": { level: 4, severityName: "Critical", sourceName: "Urgent" }
+  };
+
+  function normalizeQualysSeverity(value) {
+    var raw = sanitizeText(value);
+    if (!/^\d+$/.test(raw) || !QUALYS_SEVERITY_MAP[raw]) return null;
+    var mapped = QUALYS_SEVERITY_MAP[raw];
+    return {
+      raw: raw,
+      level: mapped.level,
+      severityName: mapped.severityName,
+      sourceName: mapped.sourceName
+    };
+  }
+
+  var QualysParser = {
+    parseXml: function (text) {
+      var doc = parseXmlDocument(text);
+      if (!isQualysDocument(doc)) {
+        throw new Error(Validation.ERR_NOT_QUALYS);
+      }
+      return doc;
+    },
+
+    parse: async function (text, onProgress) {
+      return QualysParser.parseDocument(QualysParser.parseXml(text), onProgress);
+    },
+
+    parseDocument: async function (doc, onProgress) {
+      if (!isQualysDocument(doc)) {
+        throw new Error(Validation.ERR_NOT_QUALYS);
+      }
+      onProgress = typeof onProgress === "function" ? onProgress : function () {};
+
+      var root = doc.documentElement;
+      var hosts = descendantElementsByName(root, "IP");
+      if (hosts.length === 0) {
+        throw new Error(Validation.ERR_NO_QUALYS_HOST);
+      }
+
+      var scanDate = QualysParser.getScanDate(root);
+      var findings = [];
+      var warnings = [];
+      var categoryCount = 0;
+      var rawFindingCount = 0;
+
+      for (var i = 0; i < hosts.length; i++) {
+        var host = hosts[i];
+        var categories = descendantElementsByName(host, "CAT");
+        categoryCount += categories.length;
+
+        for (var j = 0; j < categories.length; j++) {
+          var category = categories[j];
+          var findingNodes = QualysParser.getFindingNodes(category);
+          rawFindingCount += findingNodes.length;
+
+          for (var k = 0; k < findingNodes.length; k++) {
+            var finding = QualysParser.parseFinding(host, category, findingNodes[k], scanDate, warnings);
+            if (finding) findings.push(finding);
+          }
+        }
+
+        if ((i + 1) % 5 === 0) {
+          onProgress(i + 1, findings.length);
+        }
+        if ((i + 1) % 50 === 0) {
+          await yieldUI();
+        }
+      }
+      onProgress(hosts.length, findings.length);
+
+      if (categoryCount === 0) {
+        throw new Error(Validation.ERR_NO_QUALYS_CATEGORY);
+      }
+      if (rawFindingCount === 0) {
+        throw new Error(Validation.ERR_NO_QUALYS_FINDING);
+      }
+      if (findings.length === 0) {
+        throw new Error(Validation.ERR_NO_VALID_QUALYS_FINDINGS);
+      }
+
+      return {
+        hostCount: hosts.length,
+        totalFindings: findings.length,
+        findings: findings,
+        // Qualys HEADER/KEY DATE is the closest report-level equivalent to the
+        // Nessus host-start default used by the existing Date Raised control.
+        earliestHostStart: isoDate(scanDate),
+        warnings: warnings
+      };
+    },
+
+    getScanDate: function (root) {
+      var header = firstDirectChildElementByName(root, "HEADER");
+      if (!header) return null;
+      var keys = descendantElementsByName(header, "KEY");
+      for (var i = 0; i < keys.length; i++) {
+        var keyName = attributeText(keys[i], "value").toLowerCase();
+        if (keyName === "date") {
+          return parseISODate(elementText(keys[i]));
+        }
+      }
+      return null;
+    },
+
+    getFindingNodes: function (category) {
+      // Classic Qualys scan exports place the same finding shape in four report
+      // sections: INFOS/INFO, SERVICES/SERVICE, VULNS/VULN, and
+      // PRACTICES/PRACTICE. Treat each as a scanner finding. Direct children
+      // avoid accidentally treating markup inside RESULT as another record.
+      var children = category.childNodes || [];
+      var findings = [];
+      var findingNames = { info: true, service: true, vuln: true, practice: true };
+      for (var i = 0; i < children.length; i++) {
+        if (children[i].nodeType !== 1) continue;
+        var name = xmlElementName(children[i]);
+        if (findingNames[name]) findings.push(children[i]);
+      }
+      return findings;
+    },
+
+    getResultText: function (resultElement) {
+      if (!resultElement) return "";
+      var tableText = QualysParser.getTableResultText(resultElement);
+      return tableText || qualysElementText(resultElement);
+    },
+
+    getTableResultText: function (resultElement) {
+      // Some Qualys table-format results contain actual XML table rows. Render
+      // them as tab-separated rows so that the existing single evidence field
+      // remains readable. Plain-text table results retain their original text.
+      var rows = descendantElementsByName(resultElement, "TR");
+      if (rows.length === 0) rows = descendantElementsByName(resultElement, "ROW");
+      if (rows.length === 0) return "";
+
+      var output = [];
+      for (var i = 0; i < rows.length; i++) {
+        var cells = [];
+        var children = rows[i].childNodes || [];
+        for (var j = 0; j < children.length; j++) {
+          if (children[j].nodeType !== 1) continue;
+          var name = xmlElementName(children[j]);
+          if (name === "td" || name === "th" || name === "cell" || name === "column") {
+            cells.push(qualysElementText(children[j]));
+          }
+        }
+        if (cells.length) output.push(cells.join("\t"));
+      }
+      return sanitizeText(output.join("\n"));
+    },
+
+    extractCVEs: function (findingNode) {
+      // Preserve CVEs that the scan actually provides. They remain in the common
+      // model only because the existing workbook has no CVE column.
+      var cves = [];
+      function add(value) {
+        var cve = sanitizeText(value);
+        if (cve && cves.indexOf(cve) === -1) cves.push(cve);
+      }
+
+      add(attributeText(findingNode, "cveid"));
+      var cveNodes = descendantElementsByName(findingNode, "CVE_ID");
+      for (var i = 0; i < cveNodes.length; i++) add(qualysElementText(cveNodes[i]));
+      return cves;
+    },
+
+    parseFinding: function (host, category, findingNode, scanDate, warnings) {
+      var findingType = xmlElementName(findingNode).toUpperCase();
+      var qid = attributeText(findingNode, "number");
+      var sourceSeverity = attributeText(findingNode, "severity");
+      var normalizedSeverity = normalizeQualysSeverity(sourceSeverity);
+      var hostIP = attributeText(host, "value");
+      var hostName = attributeText(host, "name");
+      var hostLabel = hostIP || hostName || "an unnamed host";
+
+      // Number/QID and severity are required to sort and normalize a finding.
+      // Skip only that malformed record, preserving every other host/finding.
+      if (!/^\d+$/.test(qid)) {
+        warnings.push("Skipped a Qualys " + findingType + " finding on " + hostLabel + " because its required number (QID) attribute is " + (qid ? "not numeric." : "missing."));
+        return null;
+      }
+      if (!normalizedSeverity) {
+        warnings.push("Skipped Qualys QID " + qid + " on " + hostLabel + " because severity \"" + (sourceSeverity || "missing") + "\" is not a supported numeric Qualys severity (0-5).");
+        return null;
+      }
+      if (!hostIP && !hostName) {
+        warnings.push("Qualys QID " + qid + " has no IP value or host name; it was imported with an empty host field.");
+      }
+
+      var portRaw = attributeText(category, "port") || attributeText(findingNode, "port");
+      var resultElement = firstDirectChildElementByName(findingNode, "RESULT");
+      var title = qualysElementText(firstDirectChildElementByName(findingNode, "TITLE"));
+      var lastUpdate = qualysElementText(firstDirectChildElementByName(findingNode, "LAST_UPDATE"));
+      var diagnosis = qualysElementText(firstDirectChildElementByName(findingNode, "DIAGNOSIS"));
+      var consequence = qualysElementText(firstDirectChildElementByName(findingNode, "CONSEQUENCE"));
+      var solution = qualysElementText(firstDirectChildElementByName(findingNode, "SOLUTION"));
+      var result = QualysParser.getResultText(resultElement);
+
+      return {
+        source: "qualys",
+        findingKind: findingType,
+        hostName: hostName || hostIP,
+        hostIP: hostIP || hostName,
+        hostnamePreferred: hostName || hostIP,
+        osPreferred: "",
+        hostStart: scanDate ? isoDate(scanDate) : "",
+        hostEnd: "",
+
+        port: portRaw,
+        portNumeric: /^\d+$/.test(portRaw) ? parseInt(portRaw, 10) : null,
+        // Qualys CAT does not guarantee a service-name field. Preserve one when
+        // present rather than mislabelling the category itself as a service.
+        service: attributeText(category, "service") || attributeText(findingNode, "service"),
+        protocol: attributeText(category, "protocol") || attributeText(findingNode, "protocol"),
+
+        severity: normalizedSeverity.level,
+        severityName: normalizedSeverity.severityName,
+        riskFactor: normalizedSeverity.severityName,
+        sourceSeverity: normalizedSeverity.raw,
+        sourceSeverityName: normalizedSeverity.sourceName,
+        pluginID: qid,
+        pluginName: title,
+        pluginFamily: attributeText(category, "value"),
+        // Qualys has no separate Nessus-style synopsis. Reusing TITLE keeps the
+        // existing Observation and Vulnerability columns useful without adding a
+        // scanner-specific Excel field.
+        synopsis: title,
+        description: diagnosis,
+        impact: consequence,
+        solution: solution,
+        pluginOutput: result,
+        outputLabel: result ? "Result" : "",
+        cves: QualysParser.extractCVEs(findingNode),
+
+        lastUpdate: lastUpdate,
+        pciFlag: qualysElementText(firstDirectChildElementByName(findingNode, "PCI_FLAG")),
+        categoryMisc: attributeText(category, "misc"),
+        resultFormat: attributeText(resultElement, "format")
+      };
+    }
+  };
+
+  /* =========================================================================
+   * Input Format Detector and Common Scan Parser
+   * ========================================================================= */
+
+  var FormatDetector = {
+    parseXml: function (text) {
+      return parseXmlDocument(text);
+    },
+
+    detectDocument: function (doc) {
+      if (isNessusDocument(doc)) {
+        return { format: "nessus", displayName: "Nessus", parser: NessusParser };
+      }
+      if (isQualysDocument(doc)) {
+        return { format: "qualys", displayName: "Qualys", parser: QualysParser };
+      }
+      throw new Error(Validation.ERR_UNSUPPORTED_FORMAT);
+    },
+
+    detect: function (text) {
+      return FormatDetector.detectDocument(parseXmlDocument(text)).format;
+    }
+  };
+
+  var ScanParser = {
+    parse: async function (text, onProgress, onDetected) {
+      var doc = FormatDetector.parseXml(text);
+      var detected = FormatDetector.detectDocument(doc);
+      if (typeof onDetected === "function") onDetected(detected);
+      var result = await detected.parser.parseDocument(doc, onProgress);
+      if (!result.warnings) result.warnings = [];
+      result.format = detected.format;
+      result.sourceName = detected.displayName;
+      return result;
+    }
+  };
+
+  /* =========================================================================
    * Finding Type Mapper
    * ========================================================================= */
 
@@ -600,11 +1025,16 @@
       return "";
     },
 
-    buildImplication: function (description, pluginOutput) {
-      if (!description && !pluginOutput) return "";
+    buildImplication: function (description, pluginOutput, impact, outputLabel) {
+      if (!description && !pluginOutput && !impact) return "";
       var s = description || "";
+      if (impact) {
+        s = (s ? s + "\n\n" : "") + "Impact / Consequence:\n" + impact;
+      }
       if (pluginOutput) {
-        s = (s ? s + "\n\n" : "") + "Plugin Output:\n" + pluginOutput;
+        // Nessus does not set outputLabel, preserving its existing text exactly.
+        var label = outputLabel || "Plugin Output";
+        s = (s ? s + "\n\n" : "") + label + ":\n" + pluginOutput;
       }
       return s;
     },
@@ -627,7 +1057,7 @@
           systemComponent: RegisterBuilder.buildSystemComponent(f.hostnamePreferred, f.osPreferred),
           observation: f.synopsis,
           risk: f.severityName,
-          implication: RegisterBuilder.buildImplication(f.description, f.pluginOutput),
+          implication: RegisterBuilder.buildImplication(f.description, f.pluginOutput, f.impact, f.outputLabel),
           recommendation: f.solution,
           comments: "",
           vulnerability: f.pluginName,
@@ -1127,25 +1557,34 @@
     resetState();
     if (!file) return;
     if (file.size === 0) {
-      showError("The selected file is empty.");
+      showError(Validation.ERR_EMPTY_XML);
       return;
     }
     currentFileName = file.name || "";
     $("fileName").textContent = currentFileName || "No file selected.";
-    setMessage("Reading Nessus report...", "info");
+    setMessage("Inspecting XML scan report...", "info");
 
     try {
       var text = await readFileText(file);
-      var result = await NessusParser.parse(text, function (hostsProcessed, findingsProcessed) {
-        setMessage("Reading Nessus report... Hosts processed: " + hostsProcessed.toLocaleString() +
+      var sourceName = "scan";
+      var result = await ScanParser.parse(text, function (hostsProcessed, findingsProcessed) {
+        setMessage("Reading " + sourceName + " report... Hosts processed: " + hostsProcessed.toLocaleString() +
           " · Findings processed: " + findingsProcessed.toLocaleString(), "info");
+      }, function (detected) {
+        sourceName = detected.displayName;
+        setMessage("Detected " + sourceName + " XML. Reading report...", "info");
       });
       parsedData = result;
       $("dateRaised").value = result.earliestHostStart || "";
       renderSummary(result);
       updateSelectedCount();
-      setMessage("Ready. " + result.hostCount.toLocaleString() + " host(s), " +
-        result.totalFindings.toLocaleString() + " finding(s) loaded.", "success");
+      var warningText = "";
+      if (result.warnings && result.warnings.length) {
+        warningText = " " + result.warnings.length.toLocaleString() +
+          " malformed finding(s) were skipped because required QID or severity attributes were missing or invalid.";
+      }
+      setMessage("Ready. " + result.sourceName + " report: " + result.hostCount.toLocaleString() + " host(s), " +
+        result.totalFindings.toLocaleString() + " finding(s) loaded." + warningText, "success");
     } catch (err) {
       showError(err.message || "The file could not be processed.");
     }
@@ -1257,6 +1696,25 @@
 
     updateSelectedCount();
   }
+
+  // Deliberately small public surface for automated regression tests. The app
+  // itself remains fully bundled and does not require this object at runtime.
+  window.VulnerabilityRegisterApp = {
+    Validation: Validation,
+    FormatDetector: FormatDetector,
+    ScanParser: ScanParser,
+    NessusParser: NessusParser,
+    QualysParser: QualysParser,
+    RegisterBuilder: RegisterBuilder,
+    ExcelExporter: ExcelExporter,
+    COLUMNS: COLUMNS.slice(),
+    normalizeQualysSeverity: normalizeQualysSeverity,
+    workbookInternals: {
+      buildWorksheetXml: buildWorksheetXml,
+      buildWorkbookXml: buildWorkbookXml,
+      valuesForRow: valuesForRow
+    }
+  };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
