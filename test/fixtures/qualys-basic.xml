@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE SCAN SYSTEM "scan-1.dtd">
+<SCAN value="scan/qualys-basic">
+  <HEADER>
+    <KEY value="USERNAME">scan-user</KEY>
+    <KEY value="COMPANY">Example Company</KEY>
+    <KEY value="DATE">2026-07-15T09:30:00Z</KEY>
+    <KEY value="TITLE">Representative Qualys Scan</KEY>
+  </HEADER>
+  <IP value="192.0.2.10" name="app.example.test">
+    <INFOS>
+      <CAT value="CGI" port="443" protocol="tcp">
+        <INFO number="12345" severity="3">
+          <TITLE>Example TLS configuration weakness</TITLE>
+          <LAST_UPDATE>2026-07-01</LAST_UPDATE>
+          <PCI_FLAG>1</PCI_FLAG>
+          <DIAGNOSIS>Qualys detected a configuration weakness on the HTTPS service.</DIAGNOSIS>
+          <CONSEQUENCE>An attacker may be able to weaken the TLS connection.</CONSEQUENCE>
+          <SOLUTION>Disable the affected protocol and deploy a supported TLS configuration.</SOLUTION>
+          <RESULT>HTTPS service responded on port 443.</RESULT>
+        </INFO>
+      </CAT>
+    </INFOS>
+  </IP>
+</SCAN>

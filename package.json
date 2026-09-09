@@ -1,0 +1,12 @@
+{
+  "name": "nessus-qualys-vulnerability-register",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline Nessus and Qualys XML to Excel vulnerability register converter",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "30.0.1"
+  }
+}
