@@ -2,7 +2,7 @@
 
 A single, fully offline, client-side web application that converts **Tenable Nessus (`.nessus`)** and **QualysGuard / Qualys (`.xml`)** vulnerability scan reports into a professional Excel vulnerability register.
 
-Part of the **CyberBuddy security tools hub** — [amitpal-cyberbuddy.github.io/Testing](https://amitpal-cyberbuddy.github.io/Testing/).
+Part of **Toolbox by AmitPal** — [amitpal-cyberbuddy.github.io/Testing](https://amitpal-cyberbuddy.github.io/Testing/).
 
 ## Live URLs
 
