@@ -4,71 +4,71 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>404 — Page not found · CyberBuddy Security Tools</title>
+<title>404 — Page not found · Toolbox by AmitPal</title>
 <style>
   :root {
-    --bg: #0b1220;
-    --card: #121f36;
-    --border: #24365a;
-    --text: #e7eef8;
-    --muted: #8fa3bf;
-    --accent: #4f8cc9;
-    --accent-bright: #7fb3e8;
-    --green: #2fbf71;
-    --red: #e5484d;
+    --blue: #1F4E79;
+    --blue-dark: #16395c;
+    --blue-soft-bg: #f0f5fb;
+    --blue-soft-border: #ccdcec;
+    --red: #C00000;
+    --red-bg: #fdecea;
+    --red-border: #f3b8b2;
+    --red-text: #842b25;
+    --border: #d8dde3;
+    --bg: #f4f6f8;
+    --card-bg: #ffffff;
+    --text: #1f2933;
+    --muted: #5b6770;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0; min-height: 100vh;
     display: flex; align-items: center; justify-content: center;
     font-family: "Segoe UI", Arial, Helvetica, sans-serif;
-    background:
-      radial-gradient(1100px 500px at 85% -10%, rgba(79, 140, 201, .18), transparent 60%),
-      radial-gradient(900px 420px at -10% 20%, rgba(47, 191, 113, .08), transparent 55%),
-      var(--bg);
+    background: var(--bg);
     color: var(--text);
     line-height: 1.55;
     padding: 24px 16px;
   }
-  a { color: var(--accent-bright); text-decoration: none; }
+  a { color: var(--blue); text-decoration: none; }
   a:hover { text-decoration: underline; }
   .panel {
     width: 100%; max-width: 620px;
-    background: var(--card);
+    background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 40px 36px 34px;
     text-align: center;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+    box-shadow: 0 2px 8px rgba(16, 24, 40, .08);
   }
   .scan {
     width: 74px; height: 74px; margin: 0 auto 18px;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    background: rgba(229, 72, 77, .1);
-    border: 1px solid rgba(229, 72, 77, .4);
+    background: var(--red-bg);
+    border: 1px solid var(--red-border);
   }
   .code {
     font-size: 64px; font-weight: 800; letter-spacing: .04em; line-height: 1;
     margin: 0 0 6px;
-    background: linear-gradient(90deg, var(--accent-bright), var(--red));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
+    color: var(--blue);
   }
   h1 { margin: 0 0 10px; font-size: 22px; }
   .sub { color: var(--muted); font-size: 15px; margin: 0 auto 8px; max-width: 460px; }
   .path {
     display: inline-block; margin: 6px 0 18px; max-width: 100%;
     font-family: Consolas, "Courier New", monospace; font-size: 13px;
-    color: var(--red);
-    background: rgba(229, 72, 77, .08);
-    border: 1px solid rgba(229, 72, 77, .3);
+    color: var(--red-text);
+    background: var(--red-bg);
+    border: 1px solid var(--red-border);
     border-radius: 6px; padding: 5px 12px;
     word-break: break-all;
   }
   .hint {
     text-align: left;
-    background: rgba(79, 140, 201, .08);
-    border: 1px solid var(--border);
+    background: var(--blue-soft-bg);
+    border: 1px solid var(--blue-soft-border);
     border-radius: 10px;
     padding: 14px 18px;
     font-size: 13.5px; color: var(--muted);
@@ -84,10 +84,10 @@
     font-size: 14.5px; font-weight: 600;
     transition: background .15s ease, border-color .15s ease;
   }
-  .btn.primary { background: var(--accent); color: #fff; }
-  .btn.primary:hover { background: #3d7ab8; text-decoration: none; }
-  .btn.ghost { border: 1px solid var(--border); color: var(--text); background: transparent; }
-  .btn.ghost:hover { border-color: var(--accent); text-decoration: none; }
+  .btn.primary { background: var(--blue); color: #fff; }
+  .btn.primary:hover { background: var(--blue-dark); text-decoration: none; }
+  .btn.ghost { border: 1px solid #b9c2ca; color: var(--text); background: transparent; }
+  .btn.ghost:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-soft-bg); text-decoration: none; }
   .foot { margin-top: 26px; font-size: 12.5px; color: var(--muted); }
 </style>
 </head>
@@ -95,14 +95,14 @@
 <div class="panel">
   <div class="scan" aria-hidden="true">
     <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-      <circle cx="11" cy="11" r="6.5" stroke="#e5484d" stroke-width="1.8"/>
-      <path d="m16 16 4.5 4.5" stroke="#e5484d" stroke-width="1.8" stroke-linecap="round"/>
-      <path d="M8.5 11h5" stroke="#e5484d" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="11" cy="11" r="6.5" stroke="#C00000" stroke-width="1.8"/>
+      <path d="m16 16 4.5 4.5" stroke="#C00000" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M8.5 11h5" stroke="#C00000" stroke-width="1.8" stroke-linecap="round"/>
     </svg>
   </div>
   <p class="code">404</p>
   <h1>Scan complete — nothing found at this address</h1>
-  <p class="sub">The page you're looking for doesn't exist, was moved, or the link has a typo.</p>
+  <p class="sub">The page you're looking for doesn't exist, I moved it, or the link has a typo.</p>
   <div class="path" id="missingPath"></div>
 
   <div class="hint">
@@ -126,7 +126,7 @@
     </a>
   </div>
 
-  <p class="foot">CyberBuddy Security Tools · <a href="https://github.com/AmitPal-CyberBuddy/Testing" rel="noopener">GitHub</a></p>
+  <p class="foot">Toolbox by AmitPal · <a href="https://github.com/AmitPal-CyberBuddy/Testing" rel="noopener">GitHub</a></p>
 </div>
 
 <script>

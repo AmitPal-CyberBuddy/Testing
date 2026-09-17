@@ -3,46 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CyberBuddy — Security Tools</title>
-<meta name="description" content="Free, privacy-first security tools that run 100% in your browser. Convert Nessus and Qualys scan reports into a professional Excel vulnerability register.">
+<title>Toolbox by AmitPal</title>
+<meta name="description" content="Small tools I build that run 100% in your browser — free, private, and serverless. Includes a Nessus &amp; Qualys scan to Excel vulnerability register converter.">
 <style>
   :root {
-    --bg: #0b1220;
-    --bg-soft: #0f1a2e;
-    --card: #121f36;
-    --card-hover: #16264280;
-    --border: #24365a;
-    --border-soft: #1b2b4a;
-    --text: #e7eef8;
-    --muted: #8fa3bf;
-    --accent: #4f8cc9;
-    --accent-bright: #7fb3e8;
-    --green: #2fbf71;
-    --amber: #e8b93e;
+    --blue: #1F4E79;
+    --blue-dark: #16395c;
+    --blue-soft-bg: #f0f5fb;
+    --blue-soft-border: #ccdcec;
+    --blue-soft-text: #1d3a5c;
+    --border: #d8dde3;
+    --border-soft: #e5eaef;
+    --bg: #f4f6f8;
+    --card-bg: #ffffff;
+    --text: #1f2933;
+    --muted: #5b6770;
+    --ok: #1a7f37;
+    --ok-bg: #edf7ee;
+    --ok-border: #b8ddbd;
+    --amber-text: #9a6500;
+    --amber-bg: #fef6e0;
+    --amber-border: #ecd193;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
     margin: 0;
     font-family: "Segoe UI", Arial, Helvetica, sans-serif;
-    background:
-      radial-gradient(1100px 500px at 85% -10%, rgba(79, 140, 201, .18), transparent 60%),
-      radial-gradient(900px 420px at -10% 20%, rgba(47, 191, 113, .08), transparent 55%),
-      var(--bg);
+    background: var(--bg);
     color: var(--text);
     line-height: 1.55;
     min-height: 100vh;
   }
-  a { color: var(--accent-bright); text-decoration: none; }
+  a { color: var(--blue); text-decoration: none; }
   a:hover { text-decoration: underline; }
 
   .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
 
   /* ---------- Header ---------- */
   header {
-    border-bottom: 1px solid var(--border-soft);
-    background: rgba(11, 18, 32, .75);
-    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .06);
     position: sticky; top: 0; z-index: 10;
   }
   .nav {
@@ -51,29 +53,27 @@
   }
   .brand {
     display: flex; align-items: center; gap: 10px;
-    font-weight: 700; font-size: 18px; letter-spacing: .02em; color: var(--text);
+    font-weight: 700; font-size: 18px; letter-spacing: .02em; color: var(--blue);
   }
   .brand:hover { text-decoration: none; }
   .brand svg { flex: 0 0 auto; }
   .brand .tag {
-    font-size: 11px; font-weight: 600; color: var(--accent-bright);
-    border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px;
-    letter-spacing: .08em; text-transform: uppercase;
+    font-size: 11px; font-weight: 600; color: var(--blue-soft-text);
+    border: 1px solid var(--blue-soft-border); background: var(--blue-soft-bg);
+    border-radius: 999px; padding: 2px 10px;
+    letter-spacing: .04em;
   }
   .nav .links { display: flex; gap: 20px; font-size: 14px; }
   .nav .links a { color: var(--muted); }
-  .nav .links a:hover { color: var(--text); text-decoration: none; }
+  .nav .links a:hover { color: var(--blue); text-decoration: none; }
 
   /* ---------- Hero ---------- */
   .hero { padding: 72px 0 40px; text-align: center; }
   .hero h1 {
     margin: 0 0 14px; font-size: clamp(28px, 5vw, 44px); line-height: 1.15;
-    letter-spacing: -.01em;
+    letter-spacing: -.01em; color: var(--text);
   }
-  .hero h1 .grad {
-    background: linear-gradient(90deg, var(--accent-bright), var(--green));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
+  .hero h1 .grad { color: var(--blue); }
   .hero p {
     margin: 0 auto; max-width: 640px; color: var(--muted); font-size: 17px;
   }
@@ -82,9 +82,10 @@
     display: inline-flex; align-items: center; gap: 7px;
     font-size: 13px; color: var(--muted);
     border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px;
-    background: rgba(18, 31, 54, .6);
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .05);
   }
-  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
 
   /* ---------- Tools grid ---------- */
   .tools { padding: 36px 0 70px; }
@@ -97,70 +98,72 @@
   }
   .tool-card {
     display: flex; flex-direction: column;
-    background: var(--card);
+    background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 10px;
     padding: 22px;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .06);
     transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
   }
   .tool-card:hover {
     transform: translateY(-3px);
-    border-color: var(--accent);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+    border-color: var(--blue);
+    box-shadow: 0 6px 18px rgba(31, 78, 121, .12);
   }
   .tool-card:hover a.card-link { text-decoration: none; }
   .tool-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
   .tool-icon {
     width: 44px; height: 44px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, rgba(79,140,201,.25), rgba(47,191,113,.15));
-    border: 1px solid var(--border);
+    background: var(--blue-soft-bg);
+    border: 1px solid var(--blue-soft-border);
   }
   .status {
     font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
     padding: 3px 10px; border-radius: 999px;
   }
-  .status.live { color: var(--green); border: 1px solid rgba(47,191,113,.45); background: rgba(47,191,113,.1); }
-  .status.soon { color: var(--amber); border: 1px solid rgba(232,185,62,.45); background: rgba(232,185,62,.08); }
+  .status.live { color: var(--ok); border: 1px solid var(--ok-border); background: var(--ok-bg); }
+  .status.soon { color: var(--amber-text); border: 1px solid var(--amber-border); background: var(--amber-bg); }
   .tool-card h3 { margin: 16px 0 8px; font-size: 19px; line-height: 1.3; }
   .tool-card h3 a { color: var(--text); }
   .tool-card p { margin: 0 0 16px; color: var(--muted); font-size: 14.5px; flex: 1; }
   .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
   .badge {
-    font-size: 12px; color: var(--accent-bright);
-    border: 1px solid var(--border); background: rgba(79,140,201,.1);
+    font-size: 12px; color: var(--blue-soft-text);
+    border: 1px solid var(--blue-soft-border); background: #eef4fb;
     border-radius: 6px; padding: 3px 9px;
   }
   .cta {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    background: var(--accent); color: #fff; font-weight: 600; font-size: 14.5px;
+    background: var(--blue); color: #fff; font-weight: 600; font-size: 14.5px;
     border-radius: 8px; padding: 11px 18px;
     transition: background .15s ease;
   }
-  .cta:hover { background: #3d7ab8; text-decoration: none; }
+  .cta:hover { background: var(--blue-dark); text-decoration: none; }
 
   .tool-card.placeholder {
-    border-style: dashed; border-color: var(--border);
-    background: rgba(18, 31, 54, .35);
+    border-style: dashed; border-color: #b9c2ca;
+    background: #fafbfc;
+    box-shadow: none;
     align-items: flex-start; justify-content: center;
   }
-  .tool-card.placeholder:hover { transform: none; box-shadow: none; border-color: var(--border); }
+  .tool-card.placeholder:hover { transform: none; box-shadow: none; border-color: #b9c2ca; }
   .tool-card.placeholder h3 { color: var(--muted); margin-top: 0; }
   .tool-card.placeholder p { margin-bottom: 0; }
 
   /* ---------- Legacy note ---------- */
   .note {
-    border: 1px solid var(--border-soft);
-    border-left: 4px solid var(--accent);
-    background: var(--bg-soft);
-    border-radius: 10px;
+    border: 1px solid var(--blue-soft-border);
+    border-left: 4px solid var(--blue);
+    background: var(--blue-soft-bg);
+    border-radius: 8px;
     padding: 14px 18px;
-    font-size: 13.5px; color: var(--muted);
+    font-size: 13.5px; color: var(--blue-soft-text);
     margin: 0 0 70px;
   }
   .note code {
-    background: rgba(79,140,201,.15); border-radius: 4px;
-    padding: 1px 6px; font-size: 12.5px; color: var(--accent-bright);
+    background: #dde8f3; border-radius: 4px;
+    padding: 1px 6px; font-size: 12.5px; color: var(--blue-soft-text);
   }
 
   /* ---------- Footer ---------- */
@@ -184,11 +187,11 @@
   <div class="wrap nav">
     <a class="brand" href="./">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 2 4 5.5v5.2c0 4.9 3.4 9.4 8 10.8 4.6-1.4 8-5.9 8-10.8V5.5L12 2Z" stroke="#7fb3e8" stroke-width="1.6" stroke-linejoin="round"/>
-        <path d="m8.8 12 2.2 2.2 4.2-4.4" stroke="#2fbf71" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M12 2 4 5.5v5.2c0 4.9 3.4 9.4 8 10.8 4.6-1.4 8-5.9 8-10.8V5.5L12 2Z" stroke="#1F4E79" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="m8.8 12 2.2 2.2 4.2-4.4" stroke="#1a7f37" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      CyberBuddy
-      <span class="tag">Security Tools</span>
+      Toolbox
+      <span class="tag">by AmitPal</span>
     </a>
     <nav class="links">
       <a href="#tools">Tools</a>
@@ -199,9 +202,8 @@
 
 <main>
   <section class="hero wrap">
-    <h1>Security tooling that runs <span class="grad">100% in your browser</span></h1>
-    <p>Free utilities for security professionals. No servers, no uploads, no tracking —
-       your scan data never leaves your machine.</p>
+    <h1>Small tools I build, <span class="grad">running 100% in your browser</span></h1>
+    <p>A slightly scattered collection of things I've made — free, private, and serverless. No uploads, no tracking: your files never leave your machine.</p>
     <div class="pills">
       <span class="pill"><span class="dot"></span> Fully offline &amp; client-side</span>
       <span class="pill">No sign-up</span>
@@ -217,10 +219,10 @@
         <div class="tool-top">
           <div class="tool-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="16" rx="2" stroke="#7fb3e8" stroke-width="1.6"/>
-              <path d="M3 9h18" stroke="#7fb3e8" stroke-width="1.6"/>
-              <path d="M8 9v11" stroke="#7fb3e8" stroke-width="1.6"/>
-              <path d="M11.5 13h6M11.5 16.5h4" stroke="#2fbf71" stroke-width="1.6" stroke-linecap="round"/>
+              <rect x="3" y="4" width="18" height="16" rx="2" stroke="#1F4E79" stroke-width="1.6"/>
+              <path d="M3 9h18" stroke="#1F4E79" stroke-width="1.6"/>
+              <path d="M8 9v11" stroke="#1F4E79" stroke-width="1.6"/>
+              <path d="M11.5 13h6M11.5 16.5h4" stroke="#1a7f37" stroke-width="1.6" stroke-linecap="round"/>
             </svg>
           </div>
           <span class="status live">Live</span>
@@ -245,7 +247,7 @@
       <article class="tool-card placeholder">
         <span class="status soon">Coming soon</span>
         <h3>More tools on the way</h3>
-        <p>This hub is just getting started. Additional security utilities will appear here as they are released — stay tuned.</p>
+        <p>I keep adding things here as I build them — security tools and beyond.</p>
       </article>
 
     </div>
@@ -253,10 +255,9 @@
 
   <section class="wrap">
     <div class="note">
-      <strong>Moved?</strong> The converter used to live at <code>nessus-iva-to-excel.html</code>.
-      That old link still works — it automatically redirects to
-      <a href="vulnerability-register/"><code>/vulnerability-register/</code></a>, and it now supports
-      both Nessus <em>and</em> Qualys scans.
+      <strong>Heads up:</strong> I moved the converter from <code>nessus-iva-to-excel.html</code> to
+      <a href="vulnerability-register/"><code>/vulnerability-register/</code></a> — it now supports
+      both Nessus and Qualys. Old links still work; they redirect automatically.
     </div>
   </section>
 </main>
@@ -265,12 +266,12 @@
   <div class="wrap">
     <span class="lock">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="5" y="10" width="14" height="10" rx="2" stroke="#8fa3bf" stroke-width="1.7"/>
-        <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#8fa3bf" stroke-width="1.7"/>
+        <rect x="5" y="10" width="14" height="10" rx="2" stroke="#5b6770" stroke-width="1.7"/>
+        <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#5b6770" stroke-width="1.7"/>
       </svg>
-      All tools are fully client-side — nothing is uploaded, ever.
+      Everything I build here is fully client-side — nothing is uploaded, ever.
     </span>
-    <span>© <span id="year">2026</span> CyberBuddy · <a href="https://github.com/AmitPal-CyberBuddy/Testing" rel="noopener">Source on GitHub</a></span>
+    <span>© <span id="year">2026</span> AmitPal · <a href="https://github.com/AmitPal-CyberBuddy/Testing" rel="noopener">Source on GitHub</a></span>
   </div>
 </footer>
 
