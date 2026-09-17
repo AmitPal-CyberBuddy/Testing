@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>404 — Page not found · CyberBuddy Security Tools</title>
+<style>
+  :root {
+    --bg: #0b1220;
+    --card: #121f36;
+    --border: #24365a;
+    --text: #e7eef8;
+    --muted: #8fa3bf;
+    --accent: #4f8cc9;
+    --accent-bright: #7fb3e8;
+    --green: #2fbf71;
+    --red: #e5484d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    background:
+      radial-gradient(1100px 500px at 85% -10%, rgba(79, 140, 201, .18), transparent 60%),
+      radial-gradient(900px 420px at -10% 20%, rgba(47, 191, 113, .08), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    padding: 24px 16px;
+  }
+  a { color: var(--accent-bright); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .panel {
+    width: 100%; max-width: 620px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 36px 34px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+  }
+  .scan {
+    width: 74px; height: 74px; margin: 0 auto 18px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(229, 72, 77, .1);
+    border: 1px solid rgba(229, 72, 77, .4);
+  }
+  .code {
+    font-size: 64px; font-weight: 800; letter-spacing: .04em; line-height: 1;
+    margin: 0 0 6px;
+    background: linear-gradient(90deg, var(--accent-bright), var(--red));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  h1 { margin: 0 0 10px; font-size: 22px; }
+  .sub { color: var(--muted); font-size: 15px; margin: 0 auto 8px; max-width: 460px; }
+  .path {
+    display: inline-block; margin: 6px 0 18px; max-width: 100%;
+    font-family: Consolas, "Courier New", monospace; font-size: 13px;
+    color: var(--red);
+    background: rgba(229, 72, 77, .08);
+    border: 1px solid rgba(229, 72, 77, .3);
+    border-radius: 6px; padding: 5px 12px;
+    word-break: break-all;
+  }
+  .hint {
+    text-align: left;
+    background: rgba(79, 140, 201, .08);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13.5px; color: var(--muted);
+    margin: 0 0 24px;
+  }
+  .hint strong { color: var(--text); }
+  .hint ul { margin: 8px 0 0; padding-left: 18px; }
+  .hint li { margin: 3px 0; }
+  .btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    border-radius: 8px; padding: 11px 20px;
+    font-size: 14.5px; font-weight: 600;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.primary:hover { background: #3d7ab8; text-decoration: none; }
+  .btn.ghost { border: 1px solid var(--border); color: var(--text); background: transparent; }
+  .btn.ghost:hover { border-color: var(--accent); text-decoration: none; }
+  .foot { margin-top: 26px; font-size: 12.5px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="scan" aria-hidden="true">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+      <circle cx="11" cy="11" r="6.5" stroke="#e5484d" stroke-width="1.8"/>
+      <path d="m16 16 4.5 4.5" stroke="#e5484d" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M8.5 11h5" stroke="#e5484d" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <p class="code">404</p>
+  <h1>Scan complete — nothing found at this address</h1>
+  <p class="sub">The page you're looking for doesn't exist, was moved, or the link has a typo.</p>
+  <div class="path" id="missingPath"></div>
+
+  <div class="hint">
+    <strong>Looking for something specific?</strong>
+    <ul>
+      <li>Nessus &amp; Qualys → Excel converter: <a href="vulnerability-register/" data-base-link="vulnerability-register/">/vulnerability-register/</a></li>
+      <li>Tools hub &amp; everything else: <a href="./" data-base-link="">home page</a></li>
+      <li>Old <em>nessus-iva-to-excel.html</em> links still work and redirect automatically.</li>
+    </ul>
+  </div>
+
+  <div class="btns">
+    <a class="btn primary" href="./" data-base-link="">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1v-9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+      Go to homepage
+    </a>
+    <a class="btn ghost" href="vulnerability-register/" data-base-link="vulnerability-register/">
+      Open Vulnerability Register tool
+    </a>
+  </div>
+
+  <p class="foot">CyberBuddy Security Tools · <a href="https://github.com/AmitPal-CyberBuddy/Testing" rel="noopener">GitHub</a></p>
+</div>
+
+<script>
+(function () {
+  // Show the path that failed.
+  var pathEl = document.getElementById("missingPath");
+  if (pathEl) { pathEl.textContent = window.location.pathname; }
+
+  // GitHub Pages serves this 404 for ANY missing path depth, so resolve links
+  // against the site base. On a project page (/<repo>/...) the first path
+  // segment is the repo name; otherwise we are at site root.
+  var segments = window.location.pathname.split("/").filter(Boolean);
+  var base = segments.length > 1 ? "/" + segments[0] + "/" : "/";
+
+  var links = document.querySelectorAll("[data-base-link]");
+  for (var i = 0; i < links.length; i++) {
+    links[i].setAttribute("href", base + links[i].getAttribute("data-base-link"));
+  }
+})();
+</script>
+</body>
+</html>

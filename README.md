@@ -2,9 +2,20 @@
 
 A single, fully offline, client-side web application that converts **Tenable Nessus (`.nessus`)** and **QualysGuard / Qualys (`.xml`)** vulnerability scan reports into a professional Excel vulnerability register.
 
+Part of the **CyberBuddy security tools hub** — [amitpal-cyberbuddy.github.io/Testing](https://amitpal-cyberbuddy.github.io/Testing/).
+
+## Live URLs
+
+| Page | URL |
+| :--- | :--- |
+| Tools hub (landing page) | [amitpal-cyberbuddy.github.io/Testing](https://amitpal-cyberbuddy.github.io/Testing/) |
+| This tool (clean URL, no `.html`) | [amitpal-cyberbuddy.github.io/Testing/vulnerability-register/](https://amitpal-cyberbuddy.github.io/Testing/vulnerability-register/) |
+
+> **Note:** The old URL `nessus-iva-to-excel.html` still works — it automatically redirects to `/vulnerability-register/`, so previously shared links are not broken.
+
 ## How to use
 
-1. Download [`nessus-iva-to-excel.html`](nessus-iva-to-excel.html).
+1. Open the [live tool](https://amitpal-cyberbuddy.github.io/Testing/vulnerability-register/), or download [`vulnerability-register/index.html`](vulnerability-register/index.html) for fully offline use.
 2. Double-click the file to open it in Chrome, Edge, or Firefox.
 3. Drag and drop your Tenable Nessus (`.nessus`) or Qualys (`.xml`) file (or click **Browse**).
 4. The application automatically detects the scanner format and displays the scan summary.
