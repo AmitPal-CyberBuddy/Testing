@@ -28,6 +28,22 @@ The output file is named like:
 MyScan_Vulnerability_Register.xlsx
 ```
 
+## Excel limits the tool enforces
+
+Excel has two hard limits that produce the *"We found a problem with some content in
+'…xlsx'. Do you want us to try to recover as much as we can?"* dialog when they are
+breached. The tool enforces both before writing the file:
+
+| Limit | Value | What the tool does |
+| :--- | :--- | :--- |
+| Characters per cell | 32,767 | Longer text (usually `Implication`, which carries the scanner's plugin output) is shortened to fit and ends with a note stating the original length. The count of shortened cells is reported in the status message. |
+| Rows per worksheet | 1,048,576 | Export stops with a clear message asking you to deselect severities, rather than writing an unreadable file. |
+
+Every string cell also passes through a final gate that removes codepoints XML 1.0
+forbids (C0/C1 control characters, lone surrogates, and Unicode noncharacters). Any one
+of those makes Excel offer to repair the workbook. Values are written as inline strings,
+never formulas, so text beginning with `=`, `+`, `-` or `@` stays inert.
+
 ## Privacy
 
 The application is **100% client-side and offline**:
